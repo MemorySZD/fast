@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════
 // ⚠️ CHANGE HERE: Apps Script URL (उही)
 // ═══════════════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
 
 const CACHE_NAME = 'pro-camera-v1';
 
@@ -128,7 +128,8 @@ async function uploadPhoto(entry, type) {
       photoId: entry.photoId,
       image: type === 'compressed' ? entry.compressed : entry.original,
       fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
-      createdAt: entry.createdAt || new Date().toISOString()
+      createdAt: entry.createdAt || new Date().toISOString(),
+      cameraType: entry.cameraType || 'unknown'
     };
     var resp = await fetch(GAS_URL, {
       method: 'POST',
