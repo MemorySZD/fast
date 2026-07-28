@@ -8,7 +8,7 @@
   // ═══════════════════════════════════════════════════════════════
   // ⚠️ CHANGE HERE: आफ्नो Google Apps Script URL राख्नुहोस्
   // ═══════════════════════════════════════════════════════════════
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
 
 
   // DOM refs
