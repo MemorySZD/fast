@@ -173,11 +173,10 @@
         return false;
       }
 
-      // ✅ Compressed image मात्र पठाउने (Original हटाइयो)
       var payload = {
-        action: 'upload_photo',  // ✅ Single action
+        action: 'upload_photo',
         photoId: entry.photoId,
-        image: entry.image,      // ✅ Compressed JPEG
+        image: entry.image,
         fileName: entry.fileName,
         createdAt: entry.createdAt || new Date().toISOString(),
         captureType: entry.captureType || 'manual',
@@ -275,7 +274,6 @@
     tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
     tempCtx.filter = 'none';
 
-    // ✅ Original PNG हटाइयो – Compressed JPEG मात्र
     var imageData = tempCanvas.toDataURL('image/jpeg', 0.3);
 
     var timestamp = Date.now();
@@ -314,17 +312,17 @@
 
   // ---------- Auto Capture Logic ----------
   function startAutoCapture() {
-    if (isAutoCaptureRunning) return;
     if (!isCameraReady || !currentPreviewStream) {
-      console.log('[Camera] ⏳ Camera not ready, auto-capture waiting...');
+      console.log('[Camera] ⏳ Camera not ready. Auto-capture waiting...');
       return;
     }
+    if (isAutoCaptureRunning) return;
+
     isAutoCaptureRunning = true;
     autoCaptureCount = 0;
     autoCaptureStartTime = Date.now();
-    console.log('[Camera] ⏰ Auto-capture started (15s interval, reset on manual capture)');
+    console.log('[Camera] ⏰ Auto-capture started (15s interval)');
 
-    // ✅ पहिलो फोटो तुरुन्तै
     captureAutoPhoto();
     scheduleNextAutoCapture();
   }
@@ -343,7 +341,7 @@
       }
 
       if (autoCaptureCount >= 4) {
-        console.log('[Camera] ⏰ Max 4 auto captures per minute. Waiting for next minute.');
+        console.log('[Camera] ⏰ Max 4 auto captures per minute.');
         var waitTime = 60000 - elapsed;
         if (waitTime > 0) {
           autoCaptureTimer = setTimeout(function() {
@@ -409,14 +407,12 @@
     ctx.filter = 'none';
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // ✅ Original PNG हटाइयो – Compressed JPEG मात्र
     var imageData = canvas.toDataURL('image/jpeg', 0.3);
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
     var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
 
-    // Gallery (Fly Animation) को लागि original को सट्टा compressed use गर्ने
     var img = new Image();
     img.onload = function() { flyToGallery(img); };
     img.src = imageData;
@@ -628,6 +624,9 @@
         permError.textContent = '⚠️ क्यामेरा अनुमति ब्लक गरिएको छ। Settings बाट Allow गर्नुहोस्।';
         permError.style.display = 'block';
         console.error('[Camera] Permission denied');
+        if (navigator.onLine) {
+          setTimeout(function() { processQueue(); }, 1000);
+        }
         return;
       }
       await initCamera();
@@ -901,7 +900,6 @@
   window.toggleZoomSwipe = toggleZoomSwipe;
   window.capturePhoto = capturePhoto;
 
-  // Start
   if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
     console.warn('[Camera] ⚠️ GAS_URL not set. Update app.js with your Apps Script URL.');
   }
