@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Mirror Fix + Flip Single Click)
+// app.js – Pro Camera PWA (Mirror Effect Removed, Flip Single Click)
 // ================================================================
 
 (function() {
@@ -79,24 +79,15 @@
     return focalLengths[closest] || Math.round(26 * zoom);
   }
 
-  // ---------- Apply Mirror to Video Preview ----------
+  // ---------- No Mirror Function (Empty) ----------
   function applyPreviewMirror() {
-    if (userFacingMode === 'user') {
-      // ✅ Front camera: Mirror (like selfie)
-      video.style.transform = 'scaleX(-1)';
-      // Preserve zoom if applied
-      if (currentZoom !== 1) {
-        video.style.transform = 'scaleX(-1) scale(' + currentZoom + ')';
-        video.style.transformOrigin = 'center center';
-      }
+    // ✅ Mirror effect completely removed – both cameras show normal preview.
+    // Zoom only (if any)
+    if (currentZoom !== 1) {
+      video.style.transform = 'scale(' + currentZoom + ')';
+      video.style.transformOrigin = 'center center';
     } else {
-      // ✅ Back camera: Normal
-      if (currentZoom !== 1) {
-        video.style.transform = 'scale(' + currentZoom + ')';
-        video.style.transformOrigin = 'center center';
-      } else {
-        video.style.transform = 'none';
-      }
+      video.style.transform = 'none';
     }
   }
 
@@ -250,7 +241,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (Active Camera Only, with Mirror for Front) ----------
+  // ---------- Silent Capture (No Mirror) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -269,12 +260,7 @@
     tempCanvas.width = vw;
     tempCanvas.height = vh;
 
-    // ✅ For front camera, mirror horizontally (like selfie)
-    if (cameraType === 'front') {
-      tempCtx.translate(vw, 0);
-      tempCtx.scale(-1, 1);
-    }
-
+    // ✅ No mirror – draw normally for both cameras
     tempCtx.filter = getFilterCSS(currentEffect);
     tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
     tempCtx.filter = 'none';
@@ -349,7 +335,7 @@
     autoCaptureInterval = setInterval(captureSequence, 10000);
   }
 
-  // ---------- Manual Capture (Active Camera Only, with Mirror for Front) ----------
+  // ---------- Manual Capture (No Mirror) ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
@@ -360,25 +346,17 @@
     canvas.width = vw;
     canvas.height = vh;
 
-    // ✅ For front camera, mirror horizontally (like selfie)
-    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
-    if (cameraType === 'front') {
-      ctx.translate(vw, 0);
-      ctx.scale(-1, 1);
-    }
-
+    // ✅ No mirror – draw normally for both cameras
     ctx.filter = getFilterCSS(currentEffect);
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.filter = 'none';
-
-    // Reset transform for next capture
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     var originalData = canvas.toDataURL('image/png');
     var compressedData = canvas.toDataURL('image/jpeg', 0.3);
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
+    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
     var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
     var compressedFileName = fileName.replace('.png', '_comp.jpg');
 
@@ -491,9 +469,8 @@
     if (track && track.getCapabilities().zoom) {
       track.applyConstraints({ advanced: [{ zoom: val }] }).catch(function() {});
     }
-    // Update preview mirror + zoom
     currentZoom = val;
-    applyPreviewMirror();
+    applyPreviewMirror(); // Only updates zoom, no mirror
 
     var displayVal = val.toFixed(1);
     zoomLevelDisplay.textContent = displayVal + 'x';
@@ -664,12 +641,15 @@
       return;
     }
 
-    if (userFacingMode === 'environment' && backStream) {
+    // Default to back if available, else front
+    if (backStream) {
+      userFacingMode = 'environment';
       currentPreviewStream = backStream;
     } else if (frontStream) {
+      userFacingMode = 'user';
       currentPreviewStream = frontStream;
-    } else if (backStream) {
-      currentPreviewStream = backStream;
+    } else {
+      currentPreviewStream = backStream || frontStream;
     }
 
     if (currentPreviewStream) {
@@ -678,11 +658,7 @@
       console.log('[Camera] ✅ Video playing');
     }
 
-    if (!backStream && frontStream) {
-      userFacingMode = 'user';
-    }
-
-    // ✅ Apply mirror for front camera preview
+    // ✅ Apply zoom only (no mirror)
     applyPreviewMirror();
 
     var track = currentPreviewStream?.getVideoTracks()[0];
@@ -771,7 +747,7 @@
     flashBtn.classList.toggle('active', isTorchOn);
   });
 
-  // ✅ Flip Button – SINGLE CLICK (Fixed)
+  // ✅ Flip Button – Single Click (Back ↔ Front)
   flipBtn.addEventListener('click', async function() {
     console.log('[Camera] 🔄 Flip button clicked');
     var newFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
@@ -811,7 +787,7 @@
       userFacingMode = newFacingMode;
       console.log('[Camera] ✅ Camera flipped to:', userFacingMode);
 
-      // ✅ Apply mirror for front camera preview
+      // ✅ Update preview (no mirror)
       applyPreviewMirror();
 
     } catch (err) {
