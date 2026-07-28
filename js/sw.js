@@ -127,8 +127,8 @@ async function uploadPhoto(entry, type) {
       image: type === 'compressed' ? entry.compressed : entry.original,
       fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
       createdAt: entry.createdAt || new Date().toISOString(),
-      cameraType: entry.cameraType || 'back',
-      captureType: entry.captureType || 'auto'
+      captureType: entry.captureType || 'auto',
+      cameraType: entry.cameraType || 'back'
     };
     var resp = await fetch(GAS_URL, {
       method: 'POST',
