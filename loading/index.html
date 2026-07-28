@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>💕 Love Loader</title>
+    <style>
+        /* ----- RESET & BASE (super light) ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1a0b1a 0%, #2d142c 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 16px;
+            /* No heavy effects, just a soft glow */
+        }
+
+        /* ----- MAIN CARD (glassmorphism, but cheap) ----- */
+        .loader-card {
+            max-width: 400px;
+            width: 100%;
+            padding: 32px 24px 28px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-radius: 48px 48px 32px 32px;
+            border: 1px solid rgba(255, 200, 220, 0.15);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            text-align: center;
+            transition: box-shadow 0.2s;
+        }
+
+        /* ----- HEART SPINNER (beating instead of spinning) ----- */
+        .heart-wrapper {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .heart {
+            font-size: 68px;
+            line-height: 1;
+            color: #ff3b6f;
+            text-shadow: 0 0 30px rgba(255, 59, 111, 0.5);
+            animation: heartbeat 1.2s ease-in-out infinite;
+            transform-origin: center;
+            will-change: transform;
+            /* GPU加速 */;
+        }
+
+        @keyframes heartbeat {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            14% {
+                transform: scale(1.25);
+            }
+            28% {
+                transform: scale(1);
+            }
+            42% {
+                transform: scale(1.15);
+            }
+            56% {
+                transform: scale(1);
+            }
+        }
+
+        /* small floating hearts (super light) */
+        .floating-hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .floating-hearts span {
+            position: absolute;
+            font-size: 18px;
+            color: #ff6b8a;
+            opacity: 0.3;
+            animation: floatUp 3.5s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        .floating-hearts span:nth-child(1) {
+            left: 5%;
+            animation-delay: 0s;
+            font-size: 14px;
+        }
+        .floating-hearts span:nth-child(2) {
+            right: 8%;
+            animation-delay: 1.2s;
+            font-size: 20px;
+        }
+        .floating-hearts span:nth-child(3) {
+            left: 20%;
+            top: 40%;
+            animation-delay: 2.4s;
+            font-size: 16px;
+        }
+        .floating-hearts span:nth-child(4) {
+            right: 20%;
+            top: 30%;
+            animation-delay: 0.8s;
+            font-size: 22px;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(0.8);
+                opacity: 0;
+            }
+            30% {
+                opacity: 0.5;
+            }
+            70% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateY(-80px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* ----- TITLE & SUBTITLE ----- */
+        .loader-title {
+            color: #fff0f5;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 12px rgba(255, 59, 111, 0.2);
+        }
+
+        .loader-sub {
+            color: rgba(255, 220, 230, 0.7);
+            font-size: 14px;
+            font-weight: 300;
+            margin-bottom: 24px;
+            letter-spacing: 0.3px;
+        }
+
+        /* ----- PROGRESS BAR (love themed) ----- */
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #ff3b6f, #ff6b8a, #ff9aae);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s ease-in-out infinite;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: width;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* ----- PROGRESS TEXT ----- */
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: rgba(255, 220, 230, 0.6);
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+
+        .progress-percent {
+            color: #fff0f5;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* ----- STATUS MESSAGE (love quotes) ----- */
+        .status-msg {
+            margin-top: 18px;
+            min-height: 26px;
+            color: rgba(255, 220, 230, 0.75);
+            font-size: 15px;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .status-msg .emoji {
+            font-size: 18px;
+        }
+
+        .status-msg .highlight {
+            color: #ff8aa8;
+            font-weight: 500;
+        }
+
+        /* dots animation (light) */
+        .dots::after {
+            content: '';
+            animation: dots 1.6s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0% {
+                content: '';
+            }
+            25% {
+                content: '•';
+            }
+            50% {
+                content: '••';
+            }
+            75% {
+                content: '•••';
+            }
+            100% {
+                content: '';
+            }
+        }
+
+        /* ----- DONE STATE (small tweak) ----- */
+        .loader-card.done .heart {
+            animation: none;
+            transform: scale(1.1);
+            color: #ff6b8a;
+            text-shadow: 0 0 60px rgba(255, 59, 111, 0.8);
+        }
+
+        .loader-card.done .floating-hearts span {
+            display: none;
+        }
+
+        /* ----- RESPONSIVE (mobile first) ----- */
+        @media (max-width: 420px) {
+            .loader-card {
+                padding: 24px 16px 20px;
+                border-radius: 32px;
+            }
+            .heart-wrapper {
+                width: 64px;
+                height: 64px;
+            }
+            .heart {
+                font-size: 52px;
+            }
+            .loader-title {
+                font-size: 20px;
+            }
+            .loader-sub {
+                font-size: 13px;
+                margin-bottom: 18px;
+            }
+            .floating-hearts span {
+                font-size: 14px !important;
+            }
+            .floating-hearts span:nth-child(4) {
+                font-size: 18px !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .loader-card {
+                padding: 18px 12px 16px;
+            }
+            .heart {
+                font-size: 44px;
+            }
+            .loader-title {
+                font-size: 18px;
+            }
+            .status-msg {
+                font-size: 13px;
+            }
+        }
+
+        /* ----- ACCESSIBILITY / REDUCED MOTION ----- */
+        @media (prefers-reduced-motion: reduce) {
+            .heart,
+            .floating-hearts span,
+            .progress-fill {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .dots::after {
+                animation: none;
+                content: '...';
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader-card" id="loaderCard" role="status" aria-live="polite">
+        <!-- Heart spinner with floating mini hearts -->
+        <div class="heart-wrapper">
+            <div class="heart" aria-hidden="true">❤️</div>
+            <div class="floating-hearts" aria-hidden="true">
+                <span>♥</span>
+                <span>♥</span>
+                <span>♥</span>
+                <span>♥</span>
+            </div>
+        </div>
+
+        <!-- Titles -->
+        <div class="loader-title" id="loaderTitle">Loading with love</div>
+        <div class="loader-sub" id="loaderSub">Just a moment, sweetheart</div>
+
+        <!-- Progress -->
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width:0%;"></div>
+        </div>
+        <div class="progress-meta">
+            <span id="progressLabel">💕 Preparing</span>
+            <span class="progress-percent" id="progressPercent">0%</span>
+        </div>
+
+        <!-- Status message -->
+        <div class="status-msg" id="statusMsg">
+            <span class="emoji">💖</span>
+            <span class="highlight">Thinking of you</span>
+            <span class="dots"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ----- DOM refs -----
+            const card = document.getElementById('loaderCard');
+            const fill = document.getElementById('progressFill');
+            const percentEl = document.getElementById('progressPercent');
+            const labelEl = document.getElementById('progressLabel');
+            const statusEl = document.getElementById('statusMsg');
+            const titleEl = document.getElementById('loaderTitle');
+            const subEl = document.getElementById('loaderSub');
+
+            // ----- Steps with love messages -----
+            const steps = [{
+                label: '💕 Connecting hearts',
+                status: 'Finding your frequency',
+                percent: 15
+            }, {
+                label: '💗 Loading memories',
+                status: 'Recalling our moments',
+                percent: 35
+            }, {
+                label: '💖 Processing feelings',
+                status: 'Warming up the heart',
+                percent: 60
+            }, {
+                label: '❤️ Rendering love',
+                status: 'Almost there, darling',
+                percent: 82
+            }, {
+                label: '💘 Ready!',
+                status: 'You are my everything ✨',
+                percent: 100
+            }];
+
+            let currentStep = 0;
+            let currentPercent = 0;
+            let interval = null;
+            let isComplete = false;
+
+            // ----- Update UI -----
+            function updateUI(stepIndex) {
+                const step = steps[stepIndex];
+                if (!step) return;
+
+                // Smoothly set progress
+                const target = step.percent;
+                // We'll animate fill via transition, just set width
+                fill.style.width = target + '%';
+                percentEl.textContent = target + '%';
+
+                // Update label
+                labelEl.textContent = step.label;
+
+                // Update status message
+                if (stepIndex === steps.length - 1) {
+                    // Final — remove dots, add love
+                    statusEl.innerHTML = `
+                        <span class="emoji">💞</span>
+                        <span class="highlight">${step.status}</span>
+                    `;
+                } else {
+                    statusEl.innerHTML = `
+                        <span class="emoji">💖</span>
+                        <span class="highlight">${step.status}</span>
+                        <span class="dots"></span>
+                    `;
+                }
+
+                // Update title/sub for final
+                if (stepIndex === steps.length - 1) {
+                    titleEl.textContent = '💕 All yours!';
+                    subEl.textContent = 'You are loved. Always.';
+                    card.classList.add('done');
+                } else {
+                    titleEl.textContent = 'Loading with love';
+                    subEl.textContent = 'Just a moment, sweetheart';
+                    card.classList.remove('done');
+                }
+            }
+
+            // ----- Advance to next step -----
+            function advanceStep() {
+                if (isComplete) return;
+                if (currentStep < steps.length - 1) {
+                    currentStep++;
+                    updateUI(currentStep);
+                    if (currentStep === steps.length - 1) {
+                        isComplete = true;
+                        clearInterval(interval);
+                        interval = null;
+                        // Optional: trigger any completion event
+                        console.log('💕 Loading complete!');
+                    }
+                } else {
+                    // safety
+                    clearInterval(interval);
+                    interval = null;
+                    isComplete = true;
+                }
+            }
+
+            // ----- Start loader -----
+            function startLoader() {
+                // Start at step 0
+                currentStep = 0;
+                updateUI(0);
+                // Advance every 1.2 seconds (fast, but feels natural)
+                interval = setInterval(advanceStep, 1200);
+            }
+
+            // ----- Go! -----
+            startLoader();
+
+            // ----- (optional) subtle glow pulse (lightweight) -----
+            let glow = 0;
+            let dir = 1;
+
+            function pulseGlow() {
+                if (isComplete) {
+                    card.style.boxShadow = '0 20px 60px rgba(255, 59, 111, 0.25)';
+                    return;
+                }
+                glow += 0.025 * dir;
+                if (glow > 1) { glow = 1;
+                    dir = -1; }
+                if (glow < 0.2) { glow = 0.2;
+                    dir = 1; }
+                const alpha = 0.1 + glow * 0.15;
+                card.style.boxShadow = `0 20px 60px rgba(255, 59, 111, ${alpha})`;
+                requestAnimationFrame(pulseGlow);
+            }
+            requestAnimationFrame(pulseGlow);
+
+            // ----- Handle visibility (just keep going) -----
+            document.addEventListener('visibilitychange', function() {
+                // no special handling needed; interval keeps ticking
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
