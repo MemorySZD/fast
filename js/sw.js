@@ -3,7 +3,7 @@
 // ================================================================
 
 // ═══════════════════════════════════════════════════════════════
-// ⚠️ CHANGE HERE: Apps Script URL (उही)
+// ⚠️⚠️⚠️ CHANGE HERE: Apps Script URL (उही) ⚠️⚠️⚠️
 // ═══════════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
 const CACHE_NAME = 'pro-camera-v1';
@@ -85,7 +85,7 @@ async function handleSync() {
 
     if (queue.length === 0) return;
 
-    console.log('[SW] 📤 Syncing ' + queue.length + ' items...');
+    console.log('[SW] 📤 Syncing ' + queue.length + ' photos...');
 
     var compressedPromises = queue.map(function(entry) {
       return uploadPhoto(entry, 'compressed');
