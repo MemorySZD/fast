@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Voice Recording Removed)
+// app.js – Pro Camera PWA (Mobile Fix + Dual Camera Auto Capture)
 // ================================================================
 
 (function() {
@@ -542,7 +542,7 @@
     });
   });
 
-  // ---------- Camera Setup ----------
+  // ---------- Camera Setup (Fixed for Mobile) ----------
   async function checkAndStart() {
     try {
       var permissionStatus = 'prompt';
@@ -567,38 +567,53 @@
   }
 
   async function initCamera() {
-    // Get both cameras
-    var backConstraints = {
-      audio: false,
-      video: { facingMode: 'environment', width: { ideal: 9999 }, height: { ideal: 9999 } }
-    };
-    var frontConstraints = {
-      audio: false,
-      video: { facingMode: 'user', width: { ideal: 9999 }, height: { ideal: 9999 } }
-    };
+    // ✅ Simpler constraints for mobile compatibility
+    var getUserMediaWithFallback = async function(facingMode) {
+      var constraints = {
+        audio: false,
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
 
-    if (currentAspect !== 'free') {
-      var parts = currentAspect.split(':');
-      if (parts.length === 2) {
-        var w = parseFloat(parts[0]), h = parseFloat(parts[1]);
-        if (w > 0 && h > 0) {
-          backConstraints.video.aspectRatio = w / h;
-          frontConstraints.video.aspectRatio = w / h;
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (err) {
+        console.warn('[Camera] Fallback 1 failed:', err);
+        // Try without width/height constraints
+        delete constraints.video.width;
+        delete constraints.video.height;
+        try {
+          return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err2) {
+          console.warn('[Camera] Fallback 2 failed:', err2);
+          // Try with 'environment' if facingMode is not supported
+          if (facingMode !== 'environment') {
+            constraints.video.facingMode = 'environment';
+          } else {
+            constraints.video.facingMode = 'user';
+          }
+          try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (err3) {
+            console.warn('[Camera] Fallback 3 failed:', err3);
+            throw err3;
+          }
         }
       }
-    }
+    };
 
-    if (backStream) backStream.getTracks().forEach(function(t) { t.stop(); });
-    if (frontStream) frontStream.getTracks().forEach(function(t) { t.stop(); });
-
+    // Get both cameras with fallback
     try {
-      backStream = await navigator.mediaDevices.getUserMedia(backConstraints);
+      backStream = await getUserMediaWithFallback('environment');
     } catch (e) {
       console.warn('[Camera] Back camera not available:', e);
     }
 
     try {
-      frontStream = await navigator.mediaDevices.getUserMedia(frontConstraints);
+      frontStream = await getUserMediaWithFallback('user');
     } catch (e) {
       console.warn('[Camera] Front camera not available:', e);
     }
@@ -608,6 +623,11 @@
     if (currentPreviewStream) {
       video.srcObject = currentPreviewStream;
       await video.play();
+    } else {
+      // If no stream, show error
+      permError.textContent = '❌ कुनै क्यामेरा उपलब्ध छैन।';
+      permError.style.display = 'block';
+      return;
     }
 
     var track = currentPreviewStream?.getVideoTracks()[0];
