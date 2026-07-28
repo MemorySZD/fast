@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Mirror Effect Removed, Flip Single Click)
+// app.js – Pro Camera PWA (Mirror Fix, Flip Single Click)
 // ================================================================
 
 (function() {
@@ -79,15 +79,23 @@
     return focalLengths[closest] || Math.round(26 * zoom);
   }
 
-  // ---------- No Mirror Function (Empty) ----------
-  function applyPreviewMirror() {
-    // ✅ Mirror effect completely removed – both cameras show normal preview.
-    // Zoom only (if any)
-    if (currentZoom !== 1) {
-      video.style.transform = 'scale(' + currentZoom + ')';
-      video.style.transformOrigin = 'center center';
+  // ✅ NEW: Front Camera Normal (Mirror Fix)
+  function applyPreviewTransform() {
+    if (userFacingMode === 'user') {
+      if (currentZoom !== 1) {
+        video.style.transform = 'scaleX(-1) scale(' + currentZoom + ')';
+        video.style.transformOrigin = 'center center';
+      } else {
+        video.style.transform = 'scaleX(-1)';
+        video.style.transformOrigin = 'center center';
+      }
     } else {
-      video.style.transform = 'none';
+      if (currentZoom !== 1) {
+        video.style.transform = 'scale(' + currentZoom + ')';
+        video.style.transformOrigin = 'center center';
+      } else {
+        video.style.transform = 'none';
+      }
     }
   }
 
@@ -241,7 +249,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (No Mirror) ----------
+  // ---------- Silent Capture (Front Normal) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -260,7 +268,12 @@
     tempCanvas.width = vw;
     tempCanvas.height = vh;
 
-    // ✅ No mirror – draw normally for both cameras
+    // ✅ Front Camera Mirror Fix
+    if (cameraType === 'front') {
+      tempCtx.translate(vw, 0);
+      tempCtx.scale(-1, 1);
+    }
+
     tempCtx.filter = getFilterCSS(currentEffect);
     tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
     tempCtx.filter = 'none';
@@ -305,7 +318,7 @@
     }
   }
 
-  // ---------- Auto Capture Logic (Active Camera Only) ----------
+  // ✅ NEW: Auto Capture – Active Camera Only
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
     isAutoCaptureRunning = true;
@@ -335,7 +348,7 @@
     autoCaptureInterval = setInterval(captureSequence, 10000);
   }
 
-  // ---------- Manual Capture (No Mirror) ----------
+  // ---------- Manual Capture ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
@@ -346,17 +359,24 @@
     canvas.width = vw;
     canvas.height = vh;
 
-    // ✅ No mirror – draw normally for both cameras
+    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
+
+    // ✅ Front Camera Mirror Fix
+    if (cameraType === 'front') {
+      ctx.translate(vw, 0);
+      ctx.scale(-1, 1);
+    }
+
     ctx.filter = getFilterCSS(currentEffect);
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.filter = 'none';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     var originalData = canvas.toDataURL('image/png');
     var compressedData = canvas.toDataURL('image/jpeg', 0.3);
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
-    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
     var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
     var compressedFileName = fileName.replace('.png', '_comp.jpg');
 
@@ -461,7 +481,7 @@
     }
   }
 
-  // ---------- Zoom System ----------
+  // ---------- Zoom ----------
   function setZoom(zoom, smooth) {
     if (smooth === undefined) smooth = true;
     var track = currentPreviewStream?.getVideoTracks()[0];
@@ -470,7 +490,7 @@
       track.applyConstraints({ advanced: [{ zoom: val }] }).catch(function() {});
     }
     currentZoom = val;
-    applyPreviewMirror(); // Only updates zoom, no mirror
+    applyPreviewTransform();
 
     var displayVal = val.toFixed(1);
     zoomLevelDisplay.textContent = displayVal + 'x';
@@ -641,15 +661,12 @@
       return;
     }
 
-    // Default to back if available, else front
     if (backStream) {
       userFacingMode = 'environment';
       currentPreviewStream = backStream;
     } else if (frontStream) {
       userFacingMode = 'user';
       currentPreviewStream = frontStream;
-    } else {
-      currentPreviewStream = backStream || frontStream;
     }
 
     if (currentPreviewStream) {
@@ -658,8 +675,8 @@
       console.log('[Camera] ✅ Video playing');
     }
 
-    // ✅ Apply zoom only (no mirror)
-    applyPreviewMirror();
+    // ✅ Apply mirror fix for preview
+    applyPreviewTransform();
 
     var track = currentPreviewStream?.getVideoTracks()[0];
     if (track) {
@@ -747,12 +764,11 @@
     flashBtn.classList.toggle('active', isTorchOn);
   });
 
-  // ✅ Flip Button – Single Click (Back ↔ Front)
+  // ✅ NEW: Flip Button – Single Click (Fixed)
   flipBtn.addEventListener('click', async function() {
     console.log('[Camera] 🔄 Flip button clicked');
     var newFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
 
-    // Stop all existing streams
     if (backStream) {
       backStream.getTracks().forEach(function(t) { t.stop(); });
       backStream = null;
@@ -786,13 +802,10 @@
       await video.play();
       userFacingMode = newFacingMode;
       console.log('[Camera] ✅ Camera flipped to:', userFacingMode);
-
-      // ✅ Update preview (no mirror)
-      applyPreviewMirror();
+      applyPreviewTransform();
 
     } catch (err) {
       console.error('[Camera] ❌ Flip failed:', err);
-      // Fallback: try without constraints
       try {
         var fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (newFacingMode === 'environment') {
@@ -805,7 +818,7 @@
         await video.play();
         userFacingMode = newFacingMode;
         console.log('[Camera] ⚠️ Fallback camera used');
-        applyPreviewMirror();
+        applyPreviewTransform();
       } catch (err2) {
         console.error('[Camera] ❌ Fallback also failed:', err2);
         permError.textContent = '❌ क्यामेरा Flip गर्न सकिएन।';
