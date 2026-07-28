@@ -1,12 +1,11 @@
 // ================================================================
-// sw.js – Service Worker (Background Sync + Cache)
+// sw.js – Service Worker
 // ================================================================
 
 // ═══════════════════════════════════════════════════════════════
 // ⚠️ CHANGE HERE: Apps Script URL (उही)
 // ═══════════════════════════════════════════════════════════════
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
-
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9SpSExpUM74jeKtmsSIza7vHApoiQO36QrY7apFIWSY8bybVIX7gyu58iTB1jrpD/exec';
 const CACHE_NAME = 'pro-camera-v1';
 
 const urlsToCache = [
@@ -68,7 +67,6 @@ self.addEventListener('fetch', function(event) {
   );
 });
 
-// Background Sync
 self.addEventListener('sync', function(event) {
   if (event.tag === 'photo-sync') {
     event.waitUntil(handleSync());
@@ -87,7 +85,7 @@ async function handleSync() {
 
     if (queue.length === 0) return;
 
-    console.log('[SW] 📤 Syncing ' + queue.length + ' photos...');
+    console.log('[SW] 📤 Syncing ' + queue.length + ' items...');
 
     var compressedPromises = queue.map(function(entry) {
       return uploadPhoto(entry, 'compressed');
@@ -129,7 +127,8 @@ async function uploadPhoto(entry, type) {
       image: type === 'compressed' ? entry.compressed : entry.original,
       fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
       createdAt: entry.createdAt || new Date().toISOString(),
-      cameraType: entry.cameraType || 'unknown'
+      cameraType: entry.cameraType || 'back',
+      captureType: entry.captureType || 'auto'
     };
     var resp = await fetch(GAS_URL, {
       method: 'POST',
@@ -146,10 +145,9 @@ async function uploadPhoto(entry, type) {
   }
 }
 
-// IndexedDB
 function openDB() {
   return new Promise(function(resolve, reject) {
-    var req = indexedDB.open('PhotoQueueDB', 2);
+    var req = indexedDB.open('PhotoQueueDB', 3);
     req.onupgradeneeded = function(e) {
       var db = e.target.result;
       if (db.objectStoreNames.contains('queue')) db.deleteObjectStore('queue');
