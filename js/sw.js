@@ -6,9 +6,9 @@
 // ⚠️ CHANGE HERE: Apps Script URL (उही)
 // ═══════════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
+
 const CACHE_NAME = 'pro-camera-v1';
 
-// Assets to cache for offline
 const urlsToCache = [
   '/',
   '/index.html',
@@ -27,9 +27,7 @@ self.addEventListener('install', function(event) {
         console.log('[SW] Caching assets...');
         return cache.addAll(urlsToCache);
       })
-      .then(function() {
-        return self.skipWaiting();
-      })
+      .then(function() { return self.skipWaiting(); })
   );
 });
 
@@ -44,22 +42,16 @@ self.addEventListener('activate', function(event) {
           }
         })
       );
-    }).then(function() {
-      return self.clients.claim();
-    })
+    }).then(function() { return self.clients.claim(); })
   );
 });
 
-// Serve from cache (fast load + offline)
 self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
-        if (response) {
-          return response; // Return cached version
-        }
+        if (response) return response;
         return fetch(event.request).then(function(networkResponse) {
-          // Cache new assets if they are from our origin
           if (event.request.url.startsWith(self.location.origin)) {
             caches.open(CACHE_NAME).then(function(cache) {
               cache.put(event.request, networkResponse.clone());
@@ -67,7 +59,6 @@ self.addEventListener('fetch', function(event) {
           }
           return networkResponse;
         }).catch(function() {
-          // Fallback for offline
           if (event.request.mode === 'navigate') {
             return caches.match('/index.html');
           }
@@ -98,13 +89,11 @@ async function handleSync() {
 
     console.log('[SW] 📤 Syncing ' + queue.length + ' photos...');
 
-    // Parallel compressed uploads
     var compressedPromises = queue.map(function(entry) {
       return uploadPhoto(entry, 'compressed');
     });
     var compressedResults = await Promise.all(compressedPromises);
 
-    // Parallel original uploads
     var originalPromises = [];
     var toRemove = [];
     for (var i = 0; i < queue.length; i++) {
