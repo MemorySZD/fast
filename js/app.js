@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Auto Capture 1 Photo Only)
+// app.js – Pro Camera PWA (Auto Capture 15 sec, Reset on Manual)
 // ================================================================
 
 (function() {
@@ -57,11 +57,13 @@
   var zoomSwipeStartX = 0;
   var zoomSwipeStartVal = 1;
   var isProcessing = false;
-  var autoCaptureInterval = null;
+  var autoCaptureTimer = null;        // ✅ Timer reference for reset
   var lastUserCaptureTime = 0;
   var isAutoCaptureRunning = false;
   var lastPhotoData = null;
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  var autoCaptureCount = 0;           // ✅ Count auto captures per minute
+  var autoCaptureStartTime = 0;       // ✅ Start time for minute tracking
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -304,7 +306,7 @@
     };
 
     await addToQueue(entry);
-    console.log('[Camera] 📸 Silent capture (' + captureType + ', ' + cameraType + '):', fileName);
+    console.log('[Camera] 📸 ' + captureType + ' capture (' + cameraType + '):', fileName);
 
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
@@ -317,44 +319,101 @@
     }
   }
 
-  // ✅ NEW: Auto Capture – पहिलो 10 सेकेन्ड पछि, एकपटक एउटा मात्र
+  // ---------- Auto Capture Logic (NEW: 15 sec, Reset on Manual) ----------
   function startAutoCapture() {
     if (isAutoCaptureRunning) return;
-    // ✅ Camera Ready भएपछि मात्र Start
     if (!isCameraReady || !currentPreviewStream) {
       console.log('[Camera] ⏳ Camera not ready, auto-capture waiting...');
       return;
     }
     isAutoCaptureRunning = true;
-    console.log('[Camera] ⏰ Auto-capture started (1 photo per cycle)');
+    autoCaptureCount = 0;
+    autoCaptureStartTime = Date.now();
+    console.log('[Camera] ⏰ Auto-capture started (15s interval, reset on manual capture)');
 
-    // ✅ पहिलो capture तुरुन्तै नगरी 10 सेकेन्ड पछि मात्र
-    autoCaptureInterval = setInterval(function() {
-      var now = Date.now();
-      var timeSinceUserCapture = now - lastUserCaptureTime;
+    // ✅ पहिलो फोटो तुरुन्तै खिच्ने
+    captureAutoPhoto();
 
-      if (timeSinceUserCapture < 10000) {
-        console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
+    // ✅ हरेक 15 सेकेन्डमा auto capture (तर manual capture ले reset गर्छ)
+    scheduleNextAutoCapture();
+  }
+
+  // ✅ Auto Capture को लागि Timer Schedule गर्ने
+  function scheduleNextAutoCapture() {
+    // पुरानो timer रद्द गर्ने
+    if (autoCaptureTimer) {
+      clearTimeout(autoCaptureTimer);
+      autoCaptureTimer = null;
+    }
+
+    autoCaptureTimer = setTimeout(function() {
+      // १ मिनेट (६० सेकेन्ड) मा अधिकतम ४ वटा Auto Capture (प्रत्येक १५ सेकेन्ड)
+      var elapsed = Date.now() - autoCaptureStartTime;
+      if (elapsed >= 60000) {
+        // १ मिनेट भयो, count reset गर्ने
+        autoCaptureCount = 0;
+        autoCaptureStartTime = Date.now();
+      }
+
+      if (autoCaptureCount >= 4) {
+        console.log('[Camera] ⏰ Max 4 auto captures per minute reached. Waiting for next minute.');
+        // अर्को मिनेटको लागि पर्खने
+        var waitTime = 60000 - elapsed;
+        if (waitTime > 0) {
+          autoCaptureTimer = setTimeout(function() {
+            autoCaptureCount = 0;
+            autoCaptureStartTime = Date.now();
+            captureAutoPhoto();
+            scheduleNextAutoCapture();
+          }, waitTime);
+        }
         return;
       }
 
-      var activeCameraType = userFacingMode === 'environment' ? 'back' : 'front';
-      var activeStream = userFacingMode === 'environment' ? backStream : frontStream;
-
-      if (activeStream) {
-        console.log('[Camera] 📸 Auto capture from active camera:', activeCameraType);
-        silentCapture(activeStream, activeCameraType, 'auto');
-      } else {
-        console.warn('[Camera] ⚠️ Active camera stream not available');
+      // User ले १५ सेकेन्डभन्दा अगाडि Manual Capture गरेको छ कि छैन Check
+      var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
+      if (timeSinceUserCapture < 15000) {
+        // User ले १५ सेकेन्डभित्र Manual Capture गर्यो → Timer Reset
+        console.log('[Camera] ⏳ User captured manually, resetting auto-capture timer');
+        scheduleNextAutoCapture();
+        return;
       }
-    }, 10000); // 10 सेकेन्ड interval
+
+      // ✅ Auto Capture
+      captureAutoPhoto();
+
+      // अर्को capture को लागि schedule
+      scheduleNextAutoCapture();
+    }, 15000); // 15 सेकेन्ड
   }
 
-  // ---------- Manual Capture ----------
+  // ✅ Auto Capture Photo function (Active Camera बाट)
+  function captureAutoPhoto() {
+    var activeCameraType = userFacingMode === 'environment' ? 'back' : 'front';
+    var activeStream = userFacingMode === 'environment' ? backStream : frontStream;
+
+    if (activeStream) {
+      autoCaptureCount++;
+      console.log('[Camera] 📸 Auto capture #' + autoCaptureCount + ' from active camera:', activeCameraType);
+      silentCapture(activeStream, activeCameraType, 'auto');
+    } else {
+      console.warn('[Camera] ⚠️ Active camera stream not available for auto-capture');
+    }
+  }
+
+  // ---------- Manual Capture (Reset Auto Capture Timer) ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
+
+    // ✅ Manual Capture गर्दा lastUserCaptureTime Update गर्ने (Timer Reset को लागि)
     lastUserCaptureTime = Date.now();
+
+    // ✅ Manual Capture गर्दा auto-capture timer reset गर्ने (15 सेकेन्ड पछि मात्र अर्को auto capture)
+    if (isAutoCaptureRunning) {
+      console.log('[Camera] 🔄 Manual capture detected, resetting auto-capture timer');
+      scheduleNextAutoCapture();
+    }
 
     var vw = video.videoWidth || 1280;
     var vh = video.videoHeight || 720;
@@ -720,7 +779,7 @@
 
     console.log('[Camera] ✅ Camera ready!');
 
-    // ✅ Camera Ready भएपछि मात्र Auto Capture Start
+    // ✅ Camera Ready भएपछि Auto Capture Start
     startAutoCapture();
 
     if (navigator.onLine) {
