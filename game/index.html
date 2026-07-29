@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🧠 Number Memory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            min-height: 100vh;
+            background: #0b0a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0.5rem;
+        }
+        .game {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(16, 12, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 2.5rem;
+            padding: 1.8rem 1.2rem 2rem;
+            border: 1px solid rgba(120, 80, 255, 0.15);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            color: #c0b0e0;
+        }
+        .title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .score-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.2rem 1.2rem;
+            border-radius: 3rem;
+            border: 1px solid #2a2a4a;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .score-box span {
+            color: #fbbf24;
+            font-size: 1.2rem;
+        }
+
+        /* --- colour buttons --- */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            width: 100%;
+            max-width: 340px;
+            aspect-ratio: 1/1;
+            margin: 0.2rem 0 1.2rem;
+        }
+        .btn-colour {
+            position: relative;
+            border-radius: 1.6rem;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.15s, filter 0.1s;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+            touch-action: manipulation;
+        }
+        .btn-colour:active {
+            transform: scale(0.94);
+        }
+        .btn-colour.active {
+            filter: brightness(1.6);
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+            transform: scale(0.97);
+        }
+        .btn-colour.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .c0 {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
+        }
+        .c1 {
+            background: radial-gradient(circle at 30% 30%, #6bcb6b, #1e7e34);
+        }
+        .c2 {
+            background: radial-gradient(circle at 30% 30%, #6baaff, #1a4c8a);
+        }
+        .c3 {
+            background: radial-gradient(circle at 30% 30%, #f7dc6f, #b7950b);
+        }
+
+        /* --- number badge --- */
+        .num-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 2px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.12s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            white-space: nowrap;
+        }
+        .num-badge.show {
+            opacity: 1;
+        }
+
+        /* --- status & controls --- */
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            margin: 0.2rem 0 0.8rem;
+        }
+        .info {
+            color: #8877aa;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 1.2rem;
+            border-radius: 2rem;
+            border: 1px solid #2a2a4a;
+        }
+        .info span {
+            color: #fbbf24;
+            font-weight: 700;
+        }
+        .btn {
+            background: #2a2a4a;
+            border: none;
+            color: #d0d0f0;
+            font-weight: 700;
+            padding: 0.5rem 1.8rem;
+            border-radius: 3rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 1px solid #3a3a5a;
+            transition: all 0.15s;
+        }
+        .btn:hover {
+            background: #3a3a6a;
+            transform: scale(1.03);
+        }
+        .btn:active {
+            transform: scale(0.94);
+        }
+        .btn-primary {
+            background: #6d28d9;
+            border-color: #8b5cf6;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #7c3aed;
+            box-shadow: 0 0 30px rgba(167, 139, 250, 0.2);
+        }
+        .btn-danger {
+            background: #b91c1c;
+            border-color: #ef4444;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .message {
+            font-size: 0.9rem;
+            padding: 0.3rem 0;
+            min-height: 1.6rem;
+            color: #a78bfa;
+            font-weight: 500;
+        }
+        .message.error {
+            color: #f87171;
+        }
+        .message.success {
+            color: #6ee7b7;
+        }
+
+        .hint {
+            font-size: 0.7rem;
+            color: #554477;
+            margin-top: 0.4rem;
+            letter-spacing: 0.3px;
+        }
+
+        @media (max-width: 420px) {
+            .game {
+                padding: 1.2rem 0.8rem 1.4rem;
+            }
+            .grid {
+                gap: 0.6rem;
+                max-width: 280px;
+            }
+            .title {
+                font-size: 1.1rem;
+            }
+            .btn {
+                font-size: 0.85rem;
+                padding: 0.3rem 1.2rem;
+            }
+            .num-badge {
+                font-size: 0.7rem;
+                padding: 1px 10px;
+                top: -10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game" id="app">
+        <div class="header">
+            <div class="title">🧠 Number Memory</div>
+            <div class="score-box">🏆 <span id="scoreDisplay">0</span></div>
+        </div>
+
+        <!-- colour grid -->
+        <div class="grid" id="grid">
+            <div class="btn-colour c0" data-idx="0">
+                <span class="num-badge" id="badge-0"></span>
+            </div>
+            <div class="btn-colour c1" data-idx="1">
+                <span class="num-badge" id="badge-1"></span>
+            </div>
+            <div class="btn-colour c2" data-idx="2">
+                <span class="num-badge" id="badge-2"></span>
+            </div>
+            <div class="btn-colour c3" data-idx="3">
+                <span class="num-badge" id="badge-3"></span>
+            </div>
+        </div>
+
+        <div class="status-row">
+            <div class="info">🎯 Level <span id="levelDisplay">1</span></div>
+            <div class="info">📈 Best <span id="bestDisplay">0</span></div>
+        </div>
+
+        <div class="status-row">
+            <button class="btn btn-primary" id="startBtn">▶ Start</button>
+            <button class="btn" id="resetBtn">↻ Reset</button>
+        </div>
+
+        <div class="message" id="message">Press Start to begin</div>
+        <div class="hint">⚡ Numbers show the step order – watch & repeat!</div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ── DOM refs ──
+            const colourBtns = document.querySelectorAll('.btn-colour');
+            const badges = {
+                0: document.getElementById('badge-0'),
+                1: document.getElementById('badge-1'),
+                2: document.getElementById('badge-2'),
+                3: document.getElementById('badge-3')
+            };
+            const scoreSpan = document.getElementById('scoreDisplay');
+            const levelSpan = document.getElementById('levelDisplay');
+            const bestSpan = document.getElementById('bestDisplay');
+            const messageEl = document.getElementById('message');
+            const startBtn = document.getElementById('startBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // ── game state ──
+            const state = {
+                sequence: [],
+                playerIndex: 0,
+                isPlaying: false,
+                isPlayerTurn: false,
+                level: 0,
+                score: 0,
+                best: parseInt(localStorage.getItem('memoryBest') || '0', 10),
+                locked: false,
+            };
+            bestSpan.textContent = state.best;
+
+            // ── helpers ──
+            function randomColour() { return Math.floor(Math.random() * 4); }
+
+            function updateScore() {
+                scoreSpan.textContent = state.score;
+                levelSpan.textContent = state.level;
+                if (state.score > state.best) {
+                    state.best = state.score;
+                    localStorage.setItem('memoryBest', String(state.best));
+                    bestSpan.textContent = state.best;
+                }
+            }
+
+            function setMessage(text, type = '') {
+                messageEl.textContent = text;
+                messageEl.className = 'message ' + type;
+            }
+
+            // ── show number on a badge ──
+            function showNumber(idx, num, duration = 500) {
+                const badge = badges[idx];
+                if (!badge) return;
+                badge.textContent = num;
+                badge.classList.add('show');
+                // auto hide after duration
+                if (duration > 0) {
+                    setTimeout(() => {
+                        badge.classList.remove('show');
+                    }, duration);
+                }
+            }
+
+            // ── hide all numbers ──
+            function hideAllNumbers() {
+                Object.values(badges).forEach(b => b.classList.remove('show'));
+            }
+
+            // ── flash a colour AND show its step number ──
+            function flashColour(idx, duration = 400, stepNumber = null) {
+                return new Promise(resolve => {
+                    const btn = colourBtns[idx];
+                    if (!btn) return resolve();
+
+                    // show number if provided
+                    if (stepNumber !== null) {
+                        showNumber(idx, stepNumber, duration + 100);
+                    }
+
+                    btn.classList.add('active');
+                    setTimeout(() => {
+                        btn.classList.remove('active');
+                        // hide number after flash (but we already auto-hide via showNumber timeout)
+                        resolve();
+                    }, duration);
+                });
+            }
+
+            // ── play the whole sequence with numbers ──
+            async function playSequence() {
+                state.isPlaying = true;
+                state.isPlayerTurn = false;
+                state.locked = true;
+                hideAllNumbers();
+                setMessage('👀 Watch the numbers...', '');
+
+                for (let i = 0; i < state.sequence.length; i++) {
+                    const idx = state.sequence[i];
+                    const stepNum = i + 1; // 1-based
+                    await flashColour(idx, 400, stepNum);
+                    await new Promise(r => setTimeout(r, 150));
+                }
+
+                state.isPlaying = false;
+                state.isPlayerTurn = true;
+                state.locked = false;
+                state.playerIndex = 0;
+                hideAllNumbers();
+                setMessage(`🎯 Your turn (${state.sequence.length} steps)`, '');
+            }
+
+            // ── add a new step ──
+            function addStep() {
+                const newCol = randomColour();
+                state.sequence.push(newCol);
+                state.level = state.sequence.length;
+                updateScore();
+            }
+
+            // ── reset ──
+            function resetGame() {
+                state.isPlaying = false;
+                state.isPlayerTurn = false;
+                state.locked = false;
+                state.sequence = [];
+                state.playerIndex = 0;
+                state.score = 0;
+                state.level = 0;
+                updateScore();
+                hideAllNumbers();
+                colourBtns.forEach(b => b.classList.remove('active', 'disabled'));
+                setMessage('🔄 Reset. Press Start', '');
+            }
+
+            // ── start new round ──
+            function startRound() {
+                if (state.isPlaying) return;
+                if (state.sequence.length === 0) {
+                    resetGame();
+                    addStep();
+                } else {
+                    addStep();
+                }
+                playSequence();
+            }
+
+            // ── handle player click ──
+            function handlePlayerClick(idx) {
+                if (state.locked || !state.isPlayerTurn || state.isPlaying) return;
+
+                const expected = state.sequence[state.playerIndex];
+                const currentStep = state.playerIndex + 1; // 1-based
+
+                // show the number on clicked button
+                showNumber(idx, currentStep, 400);
+
+                if (idx !== expected) {
+                    // wrong
+                    state.isPlayerTurn = false;
+                    state.locked = true;
+                    setMessage(`❌ Wrong! Score: ${state.score}`, 'error');
+                    colourBtns.forEach(b => b.classList.add('disabled'));
+                    setTimeout(() => {
+                        colourBtns.forEach(b => b.classList.remove('disabled'));
+                        hideAllNumbers();
+                        resetGame();
+                        setMessage('Press Start to try again', '');
+                    }, 1400);
+                    return;
+                }
+
+                // correct
+                state.playerIndex++;
+                if (state.playerIndex === state.sequence.length) {
+                    // completed
+                    state.score++;
+                    updateScore();
+                    state.isPlayerTurn = false;
+                    state.locked = true;
+                    setMessage(`✅ Correct! +1  (Score: ${state.score})`, 'success');
+                    setTimeout(() => {
+                        addStep();
+                        playSequence();
+                    }, 700);
+                } else {
+                    setMessage(`✅ ${state.playerIndex}/${state.sequence.length}`, '');
+                }
+            }
+
+            // ── events ──
+            colourBtns.forEach((btn, idx) => {
+                btn.addEventListener('click', () => handlePlayerClick(idx));
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handlePlayerClick(idx);
+                });
+            });
+
+            startBtn.addEventListener('click', () => {
+                if (state.sequence.length === 0) {
+                    resetGame();
+                    addStep();
+                    playSequence();
+                } else if (!state.isPlaying && !state.isPlayerTurn) {
+                    if (state.sequence.length === 0) addStep();
+                    playSequence();
+                }
+            });
+
+            resetBtn.addEventListener('click', () => {
+                resetGame();
+                setMessage('Reset. Press Start', '');
+            });
+
+            // keyboard space
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    startBtn.click();
+                }
+            });
+
+            // ── init ──
+            resetGame();
+            setMessage('Press ▶ Start', '');
+
+        })();
+    </script>
+</body>
+</html>
