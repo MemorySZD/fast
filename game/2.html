@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ne">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>शून्य दौड - VOID RUNNER</title>
+<title>VOID RUNNER</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -86,7 +86,7 @@
   .final-label { font-size: 13px; letter-spacing: 5px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
   .wave-reached { font-size: 15px; color: var(--accent); margin-bottom: 32px; }
 
-  /* मोबाइल नियन्त्रण बटनहरू */
+  /* Mobile Controls */
   #mobile-controls {
     position: fixed; bottom: 0; left: 0; right: 0;
     height: 200px; z-index: 15; pointer-events: none;
@@ -140,7 +140,7 @@
   }
   #boost-btn:active { background: rgba(255,204,0,0.25); box-shadow: 0 0 15px rgba(255,204,0,0.3); }
 
-  /* पावर-अप सूचक */
+  /* Power-up Indicators */
   #powerup-indicator {
     position: fixed; bottom: 210px; left: 50%; transform: translateX(-50%);
     z-index: 10; pointer-events: none; display: flex; gap: 10px;
@@ -155,7 +155,7 @@
   .pu-rapid { background: rgba(255,100,0,0.2); border: 1px solid #ff6400; color: #ff6400; }
   .pu-multi { background: rgba(200,0,255,0.2); border: 1px solid #c800ff; color: #c800ff; }
 
-  /* टोस्ट */
+  /* Toasts */
   #toast-container {
     position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
     z-index: 30; display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -185,66 +185,66 @@
 <!-- HUD -->
 <div id="hud" class="hidden">
   <div class="hud-block">
-    <span class="hud-label">अंक</span>
+    <span class="hud-label">Score</span>
     <span class="hud-value" id="score-val">0</span>
   </div>
   <div class="hud-block" style="align-items:center;">
-    <span class="hud-label">लहर</span>
-    <span class="hud-value energy" id="wave-val">१</span>
+    <span class="hud-label">Wave</span>
+    <span class="hud-value energy" id="wave-val">1</span>
   </div>
   <div class="hud-block" style="align-items:flex-end;">
-    <span class="hud-label">जीवन</span>
+    <span class="hud-label">Hull</span>
     <div id="lives-display"></div>
   </div>
 </div>
 
-<!-- पावर-अप सूचक -->
+<!-- Power-up Indicators -->
 <div id="powerup-indicator">
-  <div class="pu-badge pu-shield" id="pu-shield">ढाल</div>
-  <div class="pu-badge pu-rapid" id="pu-rapid">छिटो</div>
-  <div class="pu-badge pu-multi" id="pu-multi">तीन</div>
+  <div class="pu-badge pu-shield" id="pu-shield">SHIELD</div>
+  <div class="pu-badge pu-rapid" id="pu-rapid">RAPID</div>
+  <div class="pu-badge pu-multi" id="pu-multi">MULTI</div>
 </div>
 
-<!-- टोस्ट -->
+<!-- Toasts -->
 <div id="toast-container"></div>
 
-<!-- मोबाइल नियन्त्रण -->
+<!-- Mobile Controls -->
 <div id="mobile-controls">
   <div id="joystick-zone">
     <div id="joystick-base"></div>
     <div id="joystick-thumb"></div>
   </div>
-  <div class="ctrl-btn" id="fire-btn">फायर</div>
-  <div class="ctrl-btn" id="boost-btn">बुस्ट</div>
+  <div class="ctrl-btn" id="fire-btn">FIRE</div>
+  <div class="ctrl-btn" id="boost-btn">BOOST</div>
 </div>
 
-<!-- सुरु स्क्रिन -->
+<!-- Start Screen -->
 <div class="screen-overlay" id="start-screen">
-  <div class="game-title">शून्य दौड</div>
-  <div class="game-subtitle">ग्रहका चट्टानबाट बच्नुहोस्</div>
-  <button class="btn-play" id="btn-start" aria-label="खेल सुरु गर्नुहोस्">सुरु गर्नुहोस्</button>
+  <div class="game-title">VOID RUNNER</div>
+  <div class="game-subtitle">Survive the asteroid field</div>
+  <button class="btn-play" id="btn-start" aria-label="Start Game">LAUNCH</button>
   <div class="controls-info">
-    <div class="control-item"><span class="key-badge">जोयस्टिक</span> चलाउनुहोस्</div>
-    <div class="control-item"><span class="key-badge">फायर</span> गोली चलाउनुहोस्</div>
-    <div class="control-item"><span class="key-badge">बुस्ट</span> चाँडो जानुहोस्</div>
+    <div class="control-item"><span class="key-badge">JOYSTICK</span> Move</div>
+    <div class="control-item"><span class="key-badge">FIRE</span> Shoot</div>
+    <div class="control-item"><span class="key-badge">BOOST</span> Dash</div>
   </div>
   <div class="controls-info" style="margin-top:12px; opacity:0.5;">
-    <div class="control-item"><span class="key-badge">WASD</span> चलाउनुहोस्</div>
-    <div class="control-item"><span class="key-badge">माउस</span> निशाना</div>
-    <div class="control-item"><span class="key-badge">क्लिक</span> गोली</div>
+    <div class="control-item"><span class="key-badge">WASD</span> Move</div>
+    <div class="control-item"><span class="key-badge">MOUSE</span> Aim</div>
+    <div class="control-item"><span class="key-badge">CLICK</span> Fire</div>
   </div>
 </div>
 
-<!-- खेल सकियो स्क्रिन -->
+<!-- Game Over Screen -->
 <div class="screen-overlay hidden" id="gameover-screen">
-  <div class="final-label">खेल सकियो</div>
+  <div class="final-label">Mission Failed</div>
   <div class="final-score" id="final-score">0</div>
-  <div class="wave-reached" id="wave-reached">लहर १</div>
-  <button class="btn-play" id="btn-restart" aria-label="फेरि खेल्नुहोस्">फेरि खेल्नुहोस्</button>
+  <div class="wave-reached" id="wave-reached">Wave 1</div>
+  <button class="btn-play" id="btn-restart" aria-label="Restart Game">RELAUNCH</button>
 </div>
 
 <script>
-// ==================== क्यानभास सेटअप ====================
+// ==================== Canvas Setup ====================
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -255,7 +255,7 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-// ==================== अडियो (Web Audio API) ====================
+// ==================== Audio (Web Audio API) ====================
 let audioCtx = null;
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -315,7 +315,7 @@ function playSound(type) {
   } catch(e) {}
 }
 
-// ==================== खेलको अवस्था ====================
+// ==================== Game State ====================
 let state = 'menu';
 let score = 0;
 let lives = 5;
@@ -329,23 +329,22 @@ let keys = {};
 let boostCooldown = 0;
 let shootCooldown = 0;
 let frameCount = 0;
-let autoAimAngle = 0;
 
-// जोयस्टिक अवस्था
+// Joystick state
 let joystickActive = false;
 let joystickDX = 0, joystickDY = 0;
 let joystickTouchId = null;
 
-// फायर/बुस्ट टच अवस्था
+// Touch button state
 let fireTouchActive = false;
 let boostTouchActive = false;
 
-// पावर-अप टाइमर
+// Power-up timers
 let shieldTimer = 0;
 let rapidTimer = 0;
 let multiTimer = 0;
 
-// एन्टिटी एरेहरू
+// Entity arrays
 let bullets = [];
 let asteroids = [];
 let particles = [];
@@ -353,7 +352,7 @@ let stars = [];
 let powerups = [];
 let thrustParticles = [];
 
-// खेलाडी
+// Player
 const player = {
   x: 0, y: 0,
   vx: 0, vy: 0,
@@ -363,7 +362,7 @@ const player = {
   invincible: 0
 };
 
-// ==================== ताराहरू पृष्ठभूमिमा ====================
+// ==================== Stars Background ====================
 function initStars() {
   stars = [];
   for (let i = 0; i < 180; i++) {
@@ -392,7 +391,7 @@ function drawStars() {
   }
 }
 
-// नेबुला ब्लबहरू
+// Nebula blobs
 function drawNebula() {
   const t = frameCount * 0.002;
   const blobs = [
@@ -411,7 +410,7 @@ function drawNebula() {
   }
 }
 
-// ==================== खेलाडी ====================
+// ==================== Player ====================
 function initPlayer() {
   player.x = canvas.width / 2;
   player.y = canvas.height / 2;
@@ -421,7 +420,7 @@ function initPlayer() {
 }
 
 function updatePlayer() {
-  // निशाना — सबैभन्दा नजिको ग्रहतिर आफैं निशाना (मोबाइलमा)
+  // Auto-aim at nearest asteroid on mobile, mouse aim on desktop
   let nearestDist = Infinity;
   let nearestAngle = player.angle;
   for (const a of asteroids) {
@@ -429,25 +428,20 @@ function updatePlayer() {
     const d = dx * dx + dy * dy;
     if (d < nearestDist) { nearestDist = d; nearestAngle = Math.atan2(dy, dx); }
   }
-  // डेस्कटपमा माउस निशाना
-  if (mouseX !== 0 || mouseY !== 0) {
-    const isMobile = 'ontouchstart' in window && window.innerWidth < 768;
-    if (!isMobile) {
-      nearestAngle = Math.atan2(mouseY - player.y, mouseX - player.x);
-    }
+  const isMobile = 'ontouchstart' in window && window.innerWidth < 768;
+  if (!isMobile && (mouseX !== 0 || mouseY !== 0)) {
+    nearestAngle = Math.atan2(mouseY - player.y, mouseX - player.x);
   }
-  // सुरुमा कुनै ग्रह नभए माउसतिर निशाना
   player.angle = nearestAngle;
-  autoAimAngle = nearestAngle;
 
-  // चाल
+  // Movement
   let ax = 0, ay = 0;
   if (keys['w'] || keys['arrowup']) ay -= 1;
   if (keys['s'] || keys['arrowdown']) ay += 1;
   if (keys['a'] || keys['arrowleft']) ax -= 1;
   if (keys['d'] || keys['arrowright']) ax += 1;
 
-  // जोयस्टिक इनपुट
+  // Joystick input
   if (joystickActive) {
     ax += joystickDX;
     ay += joystickDY;
@@ -476,7 +470,7 @@ function updatePlayer() {
 
   if (player.invincible > 0) player.invincible--;
 
-  // इन्जिन कणहरू
+  // Engine thrust particles
   if (len > 0) {
     for (let i = 0; i < 2; i++) {
       const backAngle = player.angle + Math.PI + (Math.random() - 0.5) * 0.7;
@@ -491,7 +485,7 @@ function updatePlayer() {
     }
   }
 
-  // गोली चलाउने
+  // Shooting
   if (shootCooldown > 0) shootCooldown--;
   const fireRate = rapidTimer > 0 ? 4 : 10;
   const wantShoot = mouseDown || fireTouchActive;
@@ -500,7 +494,7 @@ function updatePlayer() {
     shootCooldown = fireRate;
   }
 
-  // बुस्ट
+  // Boost
   if (boostCooldown > 0) boostCooldown--;
   const wantBoost = keys[' '] || boostTouchActive;
   if (wantBoost && boostCooldown <= 0) {
@@ -528,7 +522,7 @@ function drawPlayer() {
   ctx.translate(player.x, player.y);
   ctx.rotate(player.angle);
 
-  // ढाल चमक
+  // Shield glow
   if (shieldTimer > 0) {
     ctx.beginPath();
     ctx.arc(0, 0, 24, 0, Math.PI * 2);
@@ -539,7 +533,7 @@ function drawPlayer() {
     ctx.fill();
   }
 
-  // यान आकार
+  // Ship body
   ctx.beginPath();
   ctx.moveTo(18, 0);
   ctx.lineTo(-12, -10);
@@ -552,7 +546,7 @@ function drawPlayer() {
   ctx.fill();
   ctx.shadowBlur = 0;
 
-  // ककपिट
+  // Cockpit
   ctx.beginPath();
   ctx.moveTo(12, 0);
   ctx.lineTo(2, -4);
@@ -564,7 +558,7 @@ function drawPlayer() {
   ctx.restore();
 }
 
-// ==================== गोलीहरू ====================
+// ==================== Bullets ====================
 function shoot() {
   playSound('shoot');
   const spread = multiTimer > 0 ? 3 : 1;
@@ -611,7 +605,7 @@ function drawBullets() {
   }
 }
 
-// ==================== ग्रहहरू (एस्टेरोइड) ====================
+// ==================== Asteroids ====================
 function spawnAsteroid(size, x, y) {
   const sz = size || (Math.random() < 0.25 ? 'large' : Math.random() < 0.5 ? 'medium' : 'small');
   const radius = sz === 'large' ? 38 + Math.random() * 14 : sz === 'medium' ? 20 + Math.random() * 8 : 10 + Math.random() * 5;
@@ -652,7 +646,7 @@ function updateAsteroids() {
       asteroids.splice(i, 1); continue;
     }
 
-    // गोली ठोक्किएको
+    // Bullet collision
     for (let j = bullets.length - 1; j >= 0; j--) {
       const b = bullets[j];
       const dx = b.x - a.x, dy = b.y - a.y;
@@ -672,7 +666,7 @@ function updateAsteroids() {
       }
     }
 
-    // खेलाडीसँग ठोक्किएको
+    // Player collision
     if (i < asteroids.length) {
       const a2 = asteroids[i];
       if (a2) {
@@ -749,7 +743,7 @@ function drawAsteroids() {
   }
 }
 
-// ==================== पावर-अपहरू ====================
+// ==================== Power-ups ====================
 function spawnPowerup(x, y) {
   const types = ['shield', 'rapid', 'multi'];
   const type = types[Math.floor(Math.random() * types.length)];
@@ -764,9 +758,9 @@ function updatePowerups() {
     const dx = player.x - p.x, dy = player.y - p.y;
     if (dx * dx + dy * dy < (p.size + player.size) * (p.size + player.size)) {
       playSound('powerup');
-      if (p.type === 'shield') { shieldTimer = 280; showToast('ढाल सक्रिय', '#00aaff'); }
-      else if (p.type === 'rapid') { rapidTimer = 280; showToast('छिटो गोली', '#ff6400'); }
-      else if (p.type === 'multi') { multiTimer = 280; showToast('तीन गोली', '#c800ff'); }
+      if (p.type === 'shield') { shieldTimer = 280; showToast('SHIELD ACTIVE', '#00aaff'); }
+      else if (p.type === 'rapid') { rapidTimer = 280; showToast('RAPID FIRE', '#ff6400'); }
+      else if (p.type === 'multi') { multiTimer = 280; showToast('MULTI SHOT', '#c800ff'); }
       powerups.splice(i, 1);
     }
   }
@@ -803,13 +797,13 @@ function drawPowerups() {
     ctx.fillStyle = '#000';
     ctx.font = 'bold 9px Orbitron';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const icons = { shield: 'ढ', rapid: 'छ', multi: 'ती' };
+    const icons = { shield: 'S', rapid: 'R', multi: 'M' };
     ctx.fillText(icons[p.type], p.x, p.y + 1);
     ctx.restore();
   }
 }
 
-// ==================== कणहरू ====================
+// ==================== Particles ====================
 function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
@@ -846,7 +840,7 @@ function drawParticles() {
   }
 }
 
-// ==================== खेलाडीलाई हानी ====================
+// ==================== Player Hit ====================
 function hitPlayer() {
   if (player.invincible > 0) return;
   lives--;
@@ -867,7 +861,7 @@ function hitPlayer() {
   if (lives <= 0) gameOver();
 }
 
-// ==================== लहर प्रणाली ====================
+// ==================== Wave System ====================
 function updateWaves() {
   waveTimer++;
   const spawnRate = Math.max(12, 55 - wave * 4);
@@ -880,7 +874,7 @@ function updateWaves() {
     waveTimer = 0;
     waveDuration = Math.min(850, 600 + wave * 25);
     playSound('wave');
-    showToast(`लहर ${wave}`, '#ffcc00');
+    showToast(`WAVE ${wave}`, '#ffcc00');
     document.getElementById('wave-val').textContent = wave;
   }
 }
@@ -900,7 +894,7 @@ function updateLivesDisplay() {
   }
 }
 
-// ==================== टोस्ट ====================
+// ==================== Toast ====================
 function showToast(text, color) {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
@@ -913,7 +907,7 @@ function showToast(text, color) {
   setTimeout(() => { if (toast.parentNode) toast.remove(); }, 2100);
 }
 
-// ==================== क्रसहेयर (डेस्कटप) ====================
+// ==================== Crosshair (Desktop) ====================
 function drawCrosshair() {
   if ('ontouchstart' in window && window.innerWidth < 768) return;
   ctx.save();
@@ -936,7 +930,7 @@ function drawCrosshair() {
   ctx.restore();
 }
 
-// ==================== खेल प्रवाह ====================
+// ==================== Game Flow ====================
 function startGame() {
   initAudio();
   state = 'playing';
@@ -952,19 +946,19 @@ function startGame() {
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('gameover-screen').classList.add('hidden');
   document.getElementById('hud').classList.remove('hidden');
-  document.getElementById('wave-val').textContent = '१';
-  showToast('लहर १', '#ffcc00');
+  document.getElementById('wave-val').textContent = '1';
+  showToast('WAVE 1', '#ffcc00');
 }
 
 function gameOver() {
   state = 'gameover';
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('final-score').textContent = score;
-  document.getElementById('wave-reached').textContent = `लहर ${wave}`;
+  document.getElementById('wave-reached').textContent = `Wave ${wave}`;
   document.getElementById('gameover-screen').classList.remove('hidden');
 }
 
-// ==================== मुख्य लूप ====================
+// ==================== Main Loop ====================
 function gameLoop() {
   requestAnimationFrame(gameLoop);
   frameCount++;
@@ -1008,7 +1002,7 @@ function gameLoop() {
   ctx.restore();
 }
 
-// ==================== इनपुट — किबोर्ड/माउस ====================
+// ==================== Input: Keyboard/Mouse ====================
 window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
 window.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
 window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseDown = false; });
@@ -1018,10 +1012,9 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
-// ==================== इनपुट — जोयस्टिक (मोबाइल) ====================
+// ==================== Input: Joystick (Mobile) ====================
 const joystickZone = document.getElementById('joystick-zone');
 const joystickThumb = document.getElementById('joystick-thumb');
-const joystickBase = document.getElementById('joystick-base');
 
 function getJoystickCenter() {
   const rect = joystickZone.getBoundingClientRect();
@@ -1053,7 +1046,6 @@ function resetJoystick() {
   joystickThumb.style.transform = 'translate(-50%, -50%)';
 }
 
-// जोयस्टिक टच इभेन्टहरू
 joystickZone.addEventListener('touchstart', (e) => {
   e.preventDefault();
   const touch = e.changedTouches[0];
@@ -1088,23 +1080,23 @@ joystickZone.addEventListener('touchcancel', (e) => {
   joystickTouchId = null;
 }, { passive: false });
 
-// फायर बटन
+// Fire button
 const fireBtn = document.getElementById('fire-btn');
 fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); fireTouchActive = true; }, { passive: false });
 fireBtn.addEventListener('touchend', (e) => { e.preventDefault(); fireTouchActive = false; }, { passive: false });
 fireBtn.addEventListener('touchcancel', (e) => { fireTouchActive = false; }, { passive: false });
 
-// बुस्ट बटन
+// Boost button
 const boostBtn = document.getElementById('boost-btn');
 boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); boostTouchActive = true; }, { passive: false });
 boostBtn.addEventListener('touchend', (e) => { e.preventDefault(); boostTouchActive = false; }, { passive: false });
 boostBtn.addEventListener('touchcancel', (e) => { boostTouchActive = false; }, { passive: false });
 
-// क्यानभासमा टच गर्दा रोक्ने (स्क्रोल आदि)
+// Prevent canvas scroll
 canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
 canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
-// ==================== बटनहरू ====================
+// ==================== Buttons ====================
 document.getElementById('btn-start').addEventListener('click', startGame);
 document.getElementById('btn-restart').addEventListener('click', startGame);
 
@@ -1115,7 +1107,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// खेल सुरु गर्नुहोस्
+// Start the loop
 gameLoop();
 </script>
 </body>
