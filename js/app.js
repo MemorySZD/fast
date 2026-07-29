@@ -812,6 +812,14 @@
   window.addEventListener('offline', function() { setOnline(false); });
 
   // ---------- UI Events ----------
+  
+// ===== PLAY GAME BUTTON – Redirect to Game Page =====
+document.getElementById('playGameBtn').addEventListener('click', function() {
+  console.log('[🎮] Play Game button clicked! Redirecting...');
+  // ✅ Game Page मा Redirect गर्ने
+  window.location.href = 'game.html';
+});
+  
   gridBtn.addEventListener('click', function() {
     isGridOn = !isGridOn;
     gridOverlay.classList.toggle('show', isGridOn);
