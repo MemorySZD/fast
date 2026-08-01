@@ -16,19 +16,18 @@
     <div id="perm-error" class="error" style="display:none;"></div>
   </div>
 
-<!-- Top Bar -->
-<div id="top-bar" style="display:none;">
-  <div class="left">
-    <span class="status-dot online" id="statusDot"></span>
-    <span class="title">📸 Pro Camera</span>
+  <!-- Top Bar -->
+  <div id="top-bar" style="display:none;">
+    <div class="left">
+      <span class="status-dot online" id="statusDot"></span>
+      <span class="title">📸 Pro Camera</span>
+    </div>
+    <div class="right">
+      <button class="play-game-btn" id="playGameBtn">🎮 Play Game</button>
+      <button class="top-btn" id="gridBtn">📐 Grid</button>
+      <button class="top-btn" id="flashBtn">🔦 Flash</button>
+    </div>
   </div>
-  <div class="right">
-    <!-- ✅ Play Game Button -->
-    <button class="play-game-btn" id="playGameBtn">🎮 Play Game</button>
-    <button class="top-btn" id="gridBtn">📐 Grid</button>
-    <button class="top-btn" id="flashBtn">🔦 Flash</button>
-  </div>
-</div>
 
   <!-- Camera Container -->
   <div id="camera-container" style="display:none;">
@@ -36,14 +35,14 @@
     <div id="grid-overlay"><div class="hline"></div><div class="hline"></div><div class="vline"></div><div class="vline"></div></div>
     <div id="flash-overlay"></div>
 
-    <!-- Live Zoom Display (Clickable) -->
+    <!-- Live Zoom Display -->
     <div id="zoom-live-display" onclick="toggleZoomSwipe()">
       <span id="zoom-level-display">1.0x</span>
       <span id="zoom-focal-display">26mm</span>
     </div>
   </div>
 
-  <!-- Zoom Presets (No Slider) -->
+  <!-- Zoom Presets -->
   <div id="zoom-presets-area" style="display:none;">
     <div class="zoom-presets">
       <button class="zoom-preset" data-zoom="0.5">0.5x</button>
@@ -55,11 +54,18 @@
     </div>
   </div>
 
+  <!-- ===== Gallery View (New) ===== -->
+  <div id="gallery-container" style="display:none;">
+    <div class="gallery-header">
+      <span>📸 Gallery (<span id="galleryCount">0</span>)</span>
+      <button id="downloadAllBtn" class="download-btn">⬇️ Download All</button>
+    </div>
+    <div id="gallery-grid"></div>
+  </div>
+
   <!-- Bottom Bar -->
   <div id="bottom-bar" style="display:none;">
-    <div id="gallery-thumb">
-      <img id="galleryImg" style="display:none;" alt="Last" />
-    </div>
+    <button class="bottom-btn" id="galleryToggleBtn"><span class="icon">🖼️</span><span class="bottom-label">Gallery</span></button>
     <button class="bottom-btn" id="flipBtn"><span class="icon">🔄</span><span class="bottom-label">Flip</span></button>
     <div id="capture-btn"><div class="inner"></div></div>
     <button class="bottom-btn" id="effectsBtn"><span class="icon">🎨</span></button>
@@ -88,8 +94,7 @@
 
   <!-- Fly Image -->
   <img id="fly-img" />
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
+
   <script src="js/app.js" defer></script>
 </body>
 </html>
