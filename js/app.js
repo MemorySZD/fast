@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Gallery + Download)
+// app.js – Pro Camera PWA (Gallery Viewer + Back to Camera)
 // ================================================================
 
 (function() {
@@ -41,8 +41,21 @@
   var galleryGrid = document.getElementById('gallery-grid');
   var galleryCount = document.getElementById('galleryCount');
   var downloadAllBtn = document.getElementById('downloadAllBtn');
+  var closeGalleryBtn = document.getElementById('closeGalleryBtn');
+  var galleryGridContainer = document.getElementById('galleryGridContainer');
   var zoomPresets = document.querySelectorAll('.zoom-preset');
   var playGameBtn = document.getElementById('playGameBtn');
+
+  // Viewer refs
+  var viewer = document.getElementById('gallery-viewer');
+  var viewerImage = document.getElementById('viewerImage');
+  var viewerCounter = document.getElementById('viewerCounter');
+  var viewerPrev = document.getElementById('viewerPrev');
+  var viewerNext = document.getElementById('viewerNext');
+  var viewerBackBtn = document.getElementById('viewerBackBtn');
+  var viewerDownloadBtn = document.getElementById('viewerDownloadBtn');
+  var viewerDownloadAllBtn = document.getElementById('viewerDownloadAllBtn');
+  var viewerBackCameraBtn = document.getElementById('viewerBackCameraBtn');
 
   // ---------- State ----------
   var userFacingMode = 'environment';
@@ -68,9 +81,11 @@
   var autoCaptureCount = 0;
   var autoCaptureStartTime = 0;
 
-  // ✅ NEW: Session Gallery (Manual Photos Only)
-  var sessionPhotos = []; // { id, data, fileName, cameraType, timestamp }
+  // Gallery State
+  var sessionPhotos = [];
+  var viewerIndex = 0;
   var isGalleryVisible = false;
+  var isViewerOpen = false;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -268,29 +283,17 @@
     var html = '';
     sessionPhotos.forEach(function(photo, index) {
       html += '<div class="gallery-item" data-index="' + index + '">';
-      html += '  <img src="' + photo.data + '" alt="Photo" />';
-      html += '  <div class="gallery-item-overlay">';
-      html += '    <span>' + (photo.cameraType === 'back' ? '📷 Back' : '📸 Front') + '</span>';
-      html += '    <button class="download-single-btn" data-index="' + index + '">⬇️</button>';
-      html += '  </div>';
+      html += '  <img src="' + photo.data + '" alt="Photo" loading="lazy" />';
+      html += '  <div class="badge">' + (photo.cameraType === 'back' ? '📷' : '📸') + '</div>';
       html += '</div>';
     });
     galleryGrid.innerHTML = html;
 
-    // Single download buttons
-    galleryGrid.querySelectorAll('.download-single-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var idx = parseInt(this.dataset.index);
-        downloadSinglePhoto(idx);
-      });
-    });
-
-    // Click to view full
+    // Click to open viewer
     galleryGrid.querySelectorAll('.gallery-item').forEach(function(item) {
       item.addEventListener('click', function() {
         var idx = parseInt(this.dataset.index);
-        viewFullPhoto(idx);
+        openViewer(idx);
       });
     });
   }
@@ -315,18 +318,66 @@
   function toggleGallery() {
     isGalleryVisible = !isGalleryVisible;
     if (isGalleryVisible) {
-      galleryContainer.style.display = 'block';
+      galleryContainer.classList.add('open');
       renderGallery();
       galleryToggleBtn.style.background = 'rgba(59,130,246,0.3)';
+      // Hide camera elements
+      camContainer.style.display = 'none';
+      presetsArea.style.display = 'none';
+      bottomBar.style.display = 'none';
+      topBar.style.display = 'none';
     } else {
-      galleryContainer.style.display = 'none';
+      galleryContainer.classList.remove('open');
       galleryToggleBtn.style.background = 'transparent';
+      // Show camera elements
+      camContainer.style.display = 'block';
+      presetsArea.style.display = 'block';
+      bottomBar.style.display = 'flex';
+      topBar.style.display = 'flex';
     }
   }
 
-  function downloadSinglePhoto(index) {
-    var photo = sessionPhotos[index];
-    if (!photo) return;
+  // ---------- Viewer Functions ----------
+  function openViewer(index) {
+    if (sessionPhotos.length === 0) return;
+    viewerIndex = Math.min(Math.max(index, 0), sessionPhotos.length - 1);
+    isViewerOpen = true;
+    viewer.classList.add('open');
+    updateViewer();
+  }
+
+  function closeViewer() {
+    isViewerOpen = false;
+    viewer.classList.remove('open');
+  }
+
+  function updateViewer() {
+    if (!isViewerOpen || sessionPhotos.length === 0) return;
+    var photo = sessionPhotos[viewerIndex];
+    viewerImage.src = photo.data;
+    viewerCounter.textContent = (viewerIndex + 1) + ' / ' + sessionPhotos.length;
+
+    // Navigation buttons
+    viewerPrev.classList.toggle('hidden', viewerIndex <= 0);
+    viewerNext.classList.toggle('hidden', viewerIndex >= sessionPhotos.length - 1);
+  }
+
+  function navigateViewer(delta) {
+    var newIndex = viewerIndex + delta;
+    if (newIndex < 0 || newIndex >= sessionPhotos.length) return;
+    viewerIndex = newIndex;
+    // Smooth transition
+    viewerImage.style.transition = 'opacity 0.15s ease';
+    viewerImage.style.opacity = '0.6';
+    setTimeout(function() {
+      updateViewer();
+      viewerImage.style.opacity = '1';
+    }, 150);
+  }
+
+  function downloadCurrentPhoto() {
+    if (sessionPhotos.length === 0 || viewerIndex >= sessionPhotos.length) return;
+    var photo = sessionPhotos[viewerIndex];
     var link = document.createElement('a');
     link.href = photo.data;
     link.download = photo.fileName;
@@ -349,14 +400,21 @@
     });
   }
 
-  function viewFullPhoto(index) {
-    var photo = sessionPhotos[index];
-    if (!photo) return;
-    var img = document.createElement('img');
-    img.src = photo.data;
-    img.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:999;cursor:pointer;';
-    img.onclick = function() { img.remove(); };
-    document.body.appendChild(img);
+  function backToCamera() {
+    closeViewer();
+    toggleGallery(); // Close gallery if open
+    // Ensure camera is visible
+    camContainer.style.display = 'block';
+    presetsArea.style.display = 'block';
+    bottomBar.style.display = 'flex';
+    topBar.style.display = 'flex';
+    isGalleryVisible = false;
+    galleryContainer.classList.remove('open');
+    galleryToggleBtn.style.background = 'transparent';
+    // Resume video if needed
+    if (video.paused) {
+      video.play().catch(function() {});
+    }
   }
 
   // ---------- Capture (Manual Only - Add to Gallery) ----------
@@ -393,7 +451,7 @@
     var photoId = generatePhotoId();
     var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
 
-    // ✅ Add to Session Gallery (Manual Only)
+    // Add to Gallery
     addToGallery(imageData, cameraType);
 
     // Fly animation
@@ -503,7 +561,6 @@
     autoCaptureStartTime = Date.now();
     console.log('[Camera] ⏰ Auto-capture started (30s interval)');
 
-    // ✅ First capture after 3 seconds
     setTimeout(function() {
       captureAutoPhoto();
       scheduleNextAutoCapture();
@@ -590,7 +647,7 @@
   // ---------- Fly Animation ----------
   function flyToGallery(imgElement) {
     var container = document.getElementById('camera-container');
-    var thumb = document.getElementById('gallery-toggle-btn');
+    var thumb = document.getElementById('galleryToggleBtn');
     var cRect = container.getBoundingClientRect();
     var tRect = thumb ? thumb.getBoundingClientRect() : { left: 0, top: 0, width: 50, height: 50 };
     var startW = Math.min(cRect.width * 0.5, 200);
@@ -968,8 +1025,48 @@
   // Gallery Toggle
   galleryToggleBtn.addEventListener('click', toggleGallery);
 
+  // Close Gallery
+  closeGalleryBtn.addEventListener('click', function() {
+    if (isGalleryVisible) {
+      toggleGallery();
+    }
+  });
+
   // Download All
   downloadAllBtn.addEventListener('click', downloadAllPhotos);
+
+  // Viewer Events
+  viewerPrev.addEventListener('click', function() { navigateViewer(-1); });
+  viewerNext.addEventListener('click', function() { navigateViewer(1); });
+
+  // Swipe in viewer
+  var touchStartX = 0;
+  viewer.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+    }
+  }, { passive: true });
+  viewer.addEventListener('touchend', function(e) {
+    if (e.changedTouches.length === 1) {
+      var deltaX = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(deltaX) > 50) {
+        navigateViewer(deltaX < 0 ? 1 : -1);
+      }
+    }
+  }, { passive: true });
+
+  viewerBackBtn.addEventListener('click', backToCamera);
+  viewerBackCameraBtn.addEventListener('click', backToCamera);
+  viewerDownloadBtn.addEventListener('click', downloadCurrentPhoto);
+  viewerDownloadAllBtn.addEventListener('click', downloadAllPhotos);
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (!isViewerOpen) return;
+    if (e.key === 'ArrowLeft') { navigateViewer(-1); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { navigateViewer(1); e.preventDefault(); }
+    if (e.key === 'Escape') { backToCamera(); e.preventDefault(); }
+  });
 
   effectsBtn.addEventListener('click', function(e) {
     e.stopPropagation();
