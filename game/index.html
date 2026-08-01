@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <style>
-        /* ─── RESET & BASE ─── */
         * {
             margin: 0;
             padding: 0;
@@ -141,7 +140,6 @@
             border-color: rgba(255, 107, 107, 0.3);
             background: #2f1a1a;
         }
-        /* Hero */
         .hero {
             padding: 32px 0 24px 0;
             display: flex;
@@ -184,7 +182,6 @@
             font-size: 0.8rem;
             padding: 8px 20px;
         }
-        /* Controls */
         .controls {
             display: flex;
             flex-direction: column;
@@ -283,7 +280,6 @@
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
-        /* Game Grid */
         .game-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -407,9 +403,6 @@
             margin-left: auto;
             margin-right: auto;
         }
-        .empty-state .btn {
-            margin-top: 20px;
-        }
         .loading-state {
             text-align: center;
             padding: 60px 20px;
@@ -431,7 +424,6 @@
                 transform: rotate(360deg);
             }
         }
-        /* Detail */
         .game-detail {
             animation: fadeUp 0.4s ease forwards;
             padding: 10px 0 30px 0;
@@ -518,7 +510,6 @@
         .game-detail .detail-card .game-link-text a:hover {
             text-decoration: underline;
         }
-        /* Admin Login */
         .admin-login-wrapper {
             min-height: 70vh;
             display: flex;
@@ -594,7 +585,6 @@
             margin-top: 12px;
             min-height: 24px;
         }
-        /* Admin Panel */
         .admin-panel-wrapper {
             padding: 20px 0 30px 0;
         }
@@ -767,7 +757,6 @@
             padding: 30px 0;
             font-size: 0.9rem;
         }
-        /* Settings */
         .settings-section {
             max-width: 480px;
         }
@@ -953,9 +942,8 @@
             </div>
         </div>
 
-        <!-- ═══ ADMIN ROUTE ═══ (optional, kept for local storage) -->
+        <!-- ═══ ADMIN ROUTE ═══ -->
         <div id="adminRoute" class="hidden">
-            <!-- Login -->
             <div id="adminLogin" class="admin-login-wrapper">
                 <div class="admin-login-box">
                     <span class="lock-icon">🔐</span>
@@ -975,7 +963,6 @@
                 </div>
             </div>
 
-            <!-- Admin Panel -->
             <div id="adminPanel" class="hidden admin-panel-wrapper">
                 <div class="admin-panel">
                     <div class="panel-header">
@@ -988,14 +975,13 @@
                             <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public</a>
                         </div>
                     </div>
-                    <p class="subtitle">Add/delete games — stored in your browser (localStorage). Google Sheet data is read-only.</p>
+                    <p class="subtitle">Add/delete games — stored in your browser (localStorage).</p>
 
                     <div class="admin-tabs">
                         <button class="active" data-tab="games">📋 Games</button>
                         <button data-tab="settings">⚙️ Settings</button>
                     </div>
 
-                    <!-- TAB: Games -->
                     <div class="admin-tab-content active" id="tabGames">
                         <form class="admin-form" id="adminForm">
                             <div>
@@ -1030,7 +1016,6 @@
                         </div>
                     </div>
 
-                    <!-- TAB: Settings -->
                     <div class="admin-tab-content" id="tabSettings">
                         <div class="settings-section">
                             <h3 style="margin-bottom:20px;font-weight:700;">Change Credentials</h3>
@@ -1074,20 +1059,27 @@
     </div>
 
     <script>
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  🔥 तपाईंको Google Sheet को CSV URL
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         const SHEET_CSV_URL =
             'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjCj-qW3dNB9OOOxnRp8FO0Kgfz4ZDPYC6y-GMiFcsArUcZ4DuIfIf88usn5QAOJ9ekGuuYgN67FSZ/pub?output=csv';
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  CORS-Proxy URL (यसले Google ले रोकेको CORS समस्या हटाउँछ)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        // ═══════════════════════════════════════════════════════════════
+        //  PROXIES: धेरै CORS-Proxy सेवाहरू (fallback सहित)
+        // ═══════════════════════════════════════════════════════════════
+        const PROXIES = [
+            // Proxy 1: corsproxy.io (सबैभन्दा भरपर्दो)
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            // Proxy 2: api.allorigins.win (पुरानो)
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            // Proxy 3: corsproxy.io (alt format)
+            (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+        ];
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  STORAGE HELPERS (Admin को लागि)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
+        //  STORAGE HELPERS
+        // ═══════════════════════════════════════════════════════════════
 
         const LOCAL_KEY = 'gamevault_local_games';
         const CRED_KEY = 'gamevault_creds';
@@ -1126,9 +1118,9 @@
             return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  STATE
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         let sheetGames = [];
         let localGames = getLocalGames();
@@ -1137,9 +1129,9 @@
         let searchQuery = '';
         let isLoggedIn = false;
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  DOM REFS
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         const mainView = document.getElementById('mainView');
         const adminRoute = document.getElementById('adminRoute');
@@ -1177,9 +1169,9 @@
         const toast = document.getElementById('toast');
         let toastTimer = null;
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  TOAST
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function showToast(msg, type = 'success') {
             toast.textContent = msg;
@@ -1190,9 +1182,9 @@
             toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  AUTH
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function checkAuth() {
             const session = sessionStorage.getItem('gamevault_session');
@@ -1218,9 +1210,9 @@
             isLoggedIn = false;
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  ROUTING
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function navigateTo(route, data) {
             mainView.classList.add('hidden');
@@ -1266,9 +1258,9 @@
             switchTab('games');
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  TAB
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function switchTab(tabId) {
             document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
@@ -1283,40 +1275,88 @@
             btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  LOAD DATA FROM SHEET (CORS-Proxy प्रयोग गरेर)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
+        //  🟢 LOAD DATA FROM SHEET (Multi-Proxy with Fallback)
+        // ═══════════════════════════════════════════════════════════════
+
+        async function fetchWithProxy(url) {
+            // Try each proxy one by one
+            for (let i = 0; i < PROXIES.length; i++) {
+                try {
+                    const proxyUrl = PROXIES[i](url);
+                    console.log(`🔄 Trying proxy ${i + 1}: ${proxyUrl}`);
+
+                    const response = await fetch(proxyUrl, {
+                        signal: AbortSignal.timeout(15000) // 15 sec timeout
+                    });
+
+                    if (!response.ok) {
+                        console.warn(`⚠️ Proxy ${i + 1} returned status ${response.status}`);
+                        continue;
+                    }
+
+                    const text = await response.text();
+
+                    // Check if we got valid CSV data (at least 2 lines)
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    if (lines.length < 2) {
+                        console.warn(`⚠️ Proxy ${i + 1} returned less than 2 lines`);
+                        continue;
+                    }
+
+                    console.log(`✅ Proxy ${i + 1} succeeded!`);
+                    return text;
+
+                } catch (error) {
+                    console.warn(`❌ Proxy ${i + 1} failed:`, error.message);
+                    // Continue to next proxy
+                }
+            }
+
+            // All proxies failed
+            throw new Error('All CORS proxies failed. Please check your internet connection or try again later.');
+        }
 
         async function loadSheetData() {
             try {
-                // CORS-Proxy मार्फत Google Sheet CSV fetch गर्ने
-                const proxyUrl = CORS_PROXY + encodeURIComponent(SHEET_CSV_URL);
-                const response = await fetch(proxyUrl);
+                // Fetch CSV using multi-proxy
+                const csvText = await fetchWithProxy(SHEET_CSV_URL);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const csvText = await response.text();
-
-                // CSV पार्स गर्ने
+                // Parse CSV
                 const lines = csvText.split('\n').filter(line => line.trim() !== '');
                 if (lines.length < 2) {
                     throw new Error('CSV has no data rows.');
                 }
 
-                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                // Parse headers (case-insensitive)
+                const headerRaw = lines[0].split(',').map(h => h.trim().toLowerCase());
+                // Find column indices by name
+                const getIndex = (name) => headerRaw.findIndex(h => h === name);
+
+                const nameIdx = getIndex('name');
+                const categoryIdx = getIndex('category');
+                const iconIdx = getIndex('icon');
+                const ratingIdx = getIndex('rating');
+                const linkIdx = getIndex('link');
+
+                if (nameIdx === -1 || categoryIdx === -1) {
+                    throw new Error('Required columns "name" and "category" not found in CSV.');
+                }
+
                 const games = [];
                 for (let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(',').map(v => v.trim());
-                    const game = {};
-                    headers.forEach((h, idx) => {
-                        game[h] = values[idx] || '';
-                    });
-                    if (game.name && game.category) {
-                        game.id = generateId();
-                        game.rating = parseFloat(game.rating) || 0;
-                        games.push(game);
+                    const name = values[nameIdx] || '';
+                    const category = values[categoryIdx] || '';
+                    if (name && category) {
+                        games.push({
+                            id: generateId(),
+                            name: name,
+                            category: category,
+                            icon: (iconIdx !== -1 && values[iconIdx]) || '🎮',
+                            rating: parseFloat(values[ratingIdx]) || 0,
+                            link: (linkIdx !== -1 && values[linkIdx]) || '',
+                        });
                     }
                 }
 
@@ -1325,20 +1365,21 @@
                 }
 
                 sheetGames = games;
-                showToast('✅ Google Sheet data loaded successfully!', 'success');
+                showToast(`✅ Loaded ${games.length} games from Google Sheet!`, 'success');
+                console.log('📊 Sheet data:', games);
+
             } catch (error) {
                 console.error('Error loading sheet data:', error);
                 sheetGames = [];
-                showToast('⚠️ Could not load Google Sheet data. Please check your sheet and try again.', 'error');
+                showToast('⚠️ Could not load Google Sheet data: ' + error.message, 'error');
             }
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  MERGE & RENDER
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function mergeGames() {
-            // Local games + Sheet games (Sheet takes priority if duplicate name)
             const all = [...sheetGames, ...localGames];
             const seen = new Set();
             const unique = [];
@@ -1353,7 +1394,6 @@
         }
 
         async function loadAllData() {
-            // Show loading state
             grid.innerHTML = `
                         <div class="loading-state">
                             <div class="spinner">⏳</div>
@@ -1369,9 +1409,9 @@
             updateStats();
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  RENDER HELPERS
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function getCategories() {
             const cats = allGames.map(g => g.category);
@@ -1429,11 +1469,12 @@
             const filtered = getFilteredGames();
 
             if (filtered.length === 0) {
+                const hasGames = allGames.length > 0;
                 grid.innerHTML = `
                             <div class="empty-state">
-                                <span class="big-emoji">🔍</span>
-                                <h3>No games found</h3>
-                                <p>Try adjusting your search or filter.</p>
+                                <span class="big-emoji">${hasGames ? '🔍' : '🎮'}</span>
+                                <h3>${hasGames ? 'No games match' : 'No games found'}</h3>
+                                <p>${hasGames ? 'Try adjusting your search or filter.' : 'Add games via Admin panel or Google Sheet.'}</p>
                             </div>
                         `;
                 resultCount.textContent = '0 found';
@@ -1473,9 +1514,9 @@
             document.getElementById('totalCategories').textContent = cats.size;
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  DETAIL
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function renderDetail(game) {
             if (!game) {
@@ -1503,9 +1544,9 @@
                     `;
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  ADMIN LIST
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         function renderAdminList() {
             const locals = getLocalGames();
@@ -1553,9 +1594,9 @@
             });
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  ADMIN FORM
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         adminForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -1598,9 +1639,9 @@
             showToast(`✅ "${name}" added locally!`, 'success');
         });
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  LOGIN
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -1629,9 +1670,9 @@
             showToast('🚪 Logged out', '');
         });
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  SETTINGS
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         settingsForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -1680,9 +1721,9 @@
             showToast('✅ Credentials updated!', 'success');
         });
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  SEARCH
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
@@ -1691,9 +1732,9 @@
 
         backFromDetailBtn.addEventListener('click', () => navigateTo('main'));
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  HASH ROUTING
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         window.addEventListener('hashchange', handleHash);
         window.addEventListener('DOMContentLoaded', handleHash);
@@ -1712,13 +1753,18 @@
             }
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
         //  INIT
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════
 
         if (!localStorage.getItem(CRED_KEY)) {
             saveCredentials({ username: 'admin', password: 'admin123' });
         }
+
+        // Console मा डिबगिङको लागि
+        console.log('🔧 GameVault started!');
+        console.log('📄 Sheet URL:', SHEET_CSV_URL);
+        console.log('🔄 Proxies:', PROXIES.length);
 
         handleHash();
     </script>
