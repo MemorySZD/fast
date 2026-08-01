@@ -18,7 +18,6 @@
             --bg-secondary: #12162a;
             --bg-card: #1a1f3a;
             --bg-card-hover: #232a4d;
-            --bg-admin: #0f1325;
             --text-primary: #f0f3ff;
             --text-secondary: #9aa3cc;
             --accent-1: #6c5ce7;
@@ -90,6 +89,14 @@
         .btn-primary:hover {
             background: #7c6df0;
         }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: #ff7a7a;
+        }
         .btn-sm {
             padding: 6px 16px;
             font-size: 0.75rem;
@@ -101,14 +108,6 @@
         .btn-outline:hover {
             background: var(--bg-card);
             border-color: rgba(255, 255, 255, 0.2);
-        }
-        .btn-danger {
-            background: var(--danger);
-            color: #fff;
-            border-color: var(--danger);
-        }
-        .btn-danger:hover {
-            background: #ff7a7a;
         }
         .toast {
             position: fixed;
@@ -280,13 +279,13 @@
         }
         .game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 18px;
         }
         .game-card {
             background: var(--bg-card);
             border-radius: var(--radius);
-            padding: 20px 16px 18px;
+            padding: 16px 12px 14px;
             border: 1px solid rgba(255, 255, 255, 0.04);
             transition: var(--transition);
             cursor: pointer;
@@ -299,89 +298,70 @@
             text-decoration: none;
             color: inherit;
         }
-        .game-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius);
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), transparent 60%);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-            opacity: 0;
-            transition: var(--transition);
-        }
         .game-card:hover {
-            transform: translateY(-6px) scale(1.01);
+            transform: translateY(-4px);
             background: var(--bg-card-hover);
             border-color: rgba(108, 92, 231, 0.25);
-            box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(108, 92, 231, 0.1);
+            box-shadow: 0 12px 30px -10px rgba(0,0,0,0.6);
         }
-        .game-card:hover::before {
-            opacity: 1;
-        }
-        /* ─── ICON / IMAGE FIX ─── */
-        .game-card .icon-wrapper {
+        /* Icon/Image container - uniform size */
+        .game-card .icon-container {
             width: 80px;
             height: 80px;
+            border-radius: 12px;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
             background: var(--bg-secondary);
-            overflow: hidden;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             flex-shrink: 0;
         }
-        .game-card .icon-wrapper img {
+        .game-card .icon-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 12px;
         }
-        .game-card .icon-wrapper .emoji-big {
-            font-size: 3.2rem;
+        .game-card .icon-container .fallback-emoji {
+            font-size: 3rem;
             line-height: 1;
         }
         .game-card .game-name {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: #fff;
             margin: 4px 0 2px;
             line-height: 1.3;
         }
         .game-card .game-category {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: var(--accent-2);
             background: rgba(108, 92, 231, 0.15);
-            padding: 2px 14px;
+            padding: 2px 12px;
             border-radius: 100px;
             display: inline-block;
-            margin: 6px 0 4px;
+            margin: 4px 0 4px;
         }
         .game-card .game-rating {
             display: flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #fbbf24;
-            margin-top: 6px;
+            margin-top: 4px;
         }
         .game-card .game-rating span {
             color: var(--text-secondary);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
         }
         .game-card .game-grade {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
             background: rgba(108, 92, 231, 0.2);
-            padding: 2px 12px;
+            padding: 1px 12px;
             border-radius: 100px;
             color: var(--accent-2);
             margin-top: 4px;
@@ -437,12 +417,8 @@
             margin-bottom: 12px;
         }
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         /* ─── ADMIN LOGIN ─── */
         .admin-login-wrapper {
@@ -459,7 +435,7 @@
             max-width: 420px;
             width: 100%;
             border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 30px 60px -20px rgba(0,0,0,0.8);
         }
         .admin-login-box .lock-icon {
             font-size: 3rem;
@@ -490,7 +466,7 @@
             width: 100%;
             padding: 12px 16px;
             background: var(--bg-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px;
             color: #fff;
             font-size: 0.95rem;
@@ -574,7 +550,7 @@
             width: 100%;
             padding: 12px 16px;
             background: var(--bg-primary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px;
             color: #fff;
             font-size: 0.9rem;
@@ -616,24 +592,24 @@
             max-width: 600px;
             margin: 0 auto;
         }
-        .game-detail .detail-card .icon-wrapper {
+        .game-detail .detail-card .icon-container {
             width: 120px;
             height: 120px;
-            margin: 0 auto 12px;
             border-radius: 16px;
             overflow: hidden;
-            background: var(--bg-secondary);
             display: flex;
             align-items: center;
             justify-content: center;
+            background: var(--bg-secondary);
+            margin: 0 auto 12px;
         }
-        .game-detail .detail-card .icon-wrapper img {
+        .game-detail .detail-card .icon-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .game-detail .detail-card .icon-wrapper .big-emoji {
-            font-size: 5rem;
+        .game-detail .detail-card .icon-container .fallback-emoji {
+            font-size: 4rem;
         }
         .game-detail .detail-card h1 {
             font-size: 2.2rem;
@@ -690,9 +666,6 @@
             color: var(--accent-3);
             text-decoration: none;
         }
-        .game-detail .detail-card .game-link-text a:hover {
-            text-decoration: underline;
-        }
         .footer {
             margin-top: 56px;
             padding-top: 24px;
@@ -709,59 +682,23 @@
             color: #fff;
         }
         @media (max-width: 700px) {
-            .admin-form {
-                grid-template-columns: 1fr;
-            }
-            .admin-form .full-width {
-                grid-column: 1;
-            }
-            .hero {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .game-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            }
-            .game-card .icon-wrapper {
-                width: 64px;
-                height: 64px;
-            }
-            .game-card .icon-wrapper .emoji-big {
-                font-size: 2.6rem;
-            }
+            .admin-form { grid-template-columns: 1fr; }
+            .admin-form .full-width { grid-column: 1; }
+            .hero { flex-direction: column; align-items: flex-start; }
+            .game-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
         }
         @media (max-width: 500px) {
-            .game-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 12px;
-            }
-            .game-card {
-                padding: 14px 10px 12px;
-            }
-            .game-card .icon-wrapper {
-                width: 56px;
-                height: 56px;
-            }
-            .game-card .icon-wrapper .emoji-big {
-                font-size: 2.2rem;
-            }
-            .game-card .game-name {
-                font-size: 0.85rem;
-            }
+            .game-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+            .game-card { padding: 12px 8px 10px; }
+            .game-card .icon-container { width: 60px; height: 60px; }
+            .game-card .icon-container .fallback-emoji { font-size: 2.2rem; }
+            .game-card .game-name { font-size: 0.8rem; }
         }
         @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(18px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .game-card {
-            animation: fadeUp 0.4s ease forwards;
-        }
+        .game-card { animation: fadeUp 0.4s ease forwards; }
     </style>
 </head>
 <body>
@@ -769,9 +706,7 @@
     <div class="toast" id="toast"></div>
     <div class="container" id="app">
 
-        <!-- ══════════════════════════════════════════ -->
-        <!--  PUBLIC VIEW                            -->
-        <!-- ══════════════════════════════════════════ -->
+        <!-- ═══ PUBLIC VIEW ═══ -->
         <div id="publicView">
             <header class="hero">
                 <div class="hero-left">
@@ -799,14 +734,12 @@
             <div class="game-grid" id="gameGrid">
                 <div class="loading-state">
                     <div class="spinner">⏳</div>
-                    <div>Loading games from Google Sheet…</div>
+                    <div>Loading games…</div>
                 </div>
             </div>
         </div>
 
-        <!-- ══════════════════════════════════════════ -->
-        <!--  ADMIN ROUTE                             -->
-        <!-- ══════════════════════════════════════════ -->
+        <!-- ═══ ADMIN ROUTE ═══ -->
         <div id="adminRoute" class="hidden">
             <!-- Login -->
             <div id="adminLogin" class="admin-login-wrapper">
@@ -816,9 +749,9 @@
                     <p class="sub">Enter credentials to add games</p>
                     <form id="loginForm">
                         <label for="loginUser">Username</label>
-                        <input type="text" id="loginUser" placeholder="admin" required autocomplete="username" />
+                        <input type="text" id="loginUser" placeholder="admin" required />
                         <label for="loginPass">Password</label>
-                        <input type="password" id="loginPass" placeholder="••••••" required autocomplete="current-password" />
+                        <input type="password" id="loginPass" placeholder="••••••" required />
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">🔓 Login</button>
                             <button type="button" class="btn btn-outline" onclick="window.location.hash=''">← Back</button>
@@ -838,10 +771,10 @@
                         </div>
                         <div style="display:flex; gap:10px; flex-wrap:wrap;">
                             <button class="btn btn-outline btn-sm" id="adminLogoutBtn">🚪 Logout</button>
-                            <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public View</a>
+                            <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public</a>
                         </div>
                     </div>
-                    <p class="subtitle">Add a new game — it will be saved to Google Sheet and appear instantly.</p>
+                    <p class="subtitle">Add a new game — it will save to Google Sheet and appear instantly.</p>
 
                     <form class="admin-form" id="addGameForm">
                         <div>
@@ -853,8 +786,8 @@
                             <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
                         </div>
                         <div>
-                            <label for="gameIcon">Icon (emoji or image URL)</label>
-                            <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/image.png" />
+                            <label for="gameIcon">Icon (Image URL or Emoji)</label>
+                            <input type="text" id="gameIcon" placeholder="https://example.com/icon.png or 🎮" />
                         </div>
                         <div>
                             <label for="gameRating">Rating (1–5)</label>
@@ -873,13 +806,11 @@
             </div>
         </div>
 
-        <!-- ══════════════════════════════════════════ -->
-        <!--  DETAIL VIEW                             -->
-        <!-- ══════════════════════════════════════════ -->
+        <!-- ═══ DETAIL VIEW ═══ -->
         <div id="detailView" class="hidden">
             <div class="game-detail">
                 <div class="back-bar">
-                    <button class="btn btn-outline btn-sm" id="backFromDetailBtn">← Back to list</button>
+                    <button class="btn btn-outline btn-sm" id="backFromDetailBtn">← Back</button>
                 </div>
                 <div class="detail-card" id="detailCard"></div>
             </div>
@@ -891,12 +822,12 @@
     </div>
 
     <script>
-        // ═══════════════════════════════════════════════════════════════
-        //  🔥 यहाँ आफ्नो Google Apps Script Web App URL राख्नुहोस्
-        // ═══════════════════════════════════════════════════════════════
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace with your URL
+        // ════════════════════════════════════════════════════
+        // 🔥 यहाँ आफ्नो Web App URL हाल्नुहोस्
+        // ════════════════════════════════════════════════════
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace
 
-        // ─── Credentials ───
+        // ─── Credentials (localStorage) ───
         const CRED_KEY = 'gamevault_creds';
         const SESSION_KEY = 'gamevault_admin_session';
 
@@ -972,7 +903,7 @@
             toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ─── API calls ───
+        // ─── API calls (CORS fix: use URL-encoded) ───
         async function fetchGames() {
             try {
                 const res = await fetch(API_URL);
@@ -981,18 +912,27 @@
                 return data;
             } catch (err) {
                 console.error('Fetch error:', err);
-                showToast('⚠️ Failed to load games. Please try again.', 'error');
+                showToast('⚠️ Failed to load games.', 'error');
                 return [];
             }
         }
 
         async function addGame(gameData) {
             try {
+                // URL-encoded body → no preflight
+                const formData = new URLSearchParams();
+                formData.append('name', gameData.name);
+                formData.append('category', gameData.category);
+                formData.append('icon', gameData.icon);
+                formData.append('rating', gameData.rating);
+                formData.append('link', gameData.link);
+
                 const res = await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(gameData),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString(),
                 });
                 const result = await res.json();
                 return result;
@@ -1024,6 +964,22 @@
             return 'F';
         }
 
+        // Check if string is a valid image URL (simple)
+        function isImageUrl(url) {
+            if (!url) return false;
+            const imgExtensions = ['jpg','jpeg','png','gif','webp','bmp','svg'];
+            const ext = url.split('.').pop().toLowerCase();
+            return imgExtensions.includes(ext) || url.startsWith('http') && (url.includes('imgur') || url.includes('i.ibb.co'));
+        }
+
+        function getIconHtml(icon) {
+            if (isImageUrl(icon)) {
+                return `<img src="${icon}" alt="game icon" loading="lazy" />`;
+            } else {
+                return `<span class="fallback-emoji">${icon || '🎮'}</span>`;
+            }
+        }
+
         function getCategories() {
             const cats = allGames.map(g => g.category);
             return ['All', ...new Set(cats)];
@@ -1036,17 +992,6 @@
                 const matchSearch = !q || game.name.toLowerCase().includes(q) || game.category.toLowerCase().includes(q);
                 return matchCat && matchSearch;
             });
-        }
-
-        // ─── Render Icon (emoji or image) ───
-        function renderIcon(icon) {
-            if (!icon) return '<span class="emoji-big">🎮</span>';
-            // Check if it's a URL (starts with http:// or https://)
-            if (icon.startsWith('http://') || icon.startsWith('https://')) {
-                return `<img src="${icon}" alt="game icon" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'emoji-big\\'>🎮</span>'" />`;
-            }
-            // Otherwise treat as emoji
-            return `<span class="emoji-big">${icon}</span>`;
         }
 
         function renderFilters() {
@@ -1077,7 +1022,7 @@
                             <div class="empty-state">
                                 <span class="big-emoji">🎮</span>
                                 <h3>No games found</h3>
-                                <p>Add your first game via the Admin panel!</p>
+                                <p>Add your first game via Admin panel.</p>
                             </div>
                         `;
                 resultCount.textContent = '0 found';
@@ -1086,13 +1031,13 @@
             }
 
             grid.innerHTML = filtered.map(game => `
-                        <div class="game-card" data-name="${game.name || 'Untitled'}">
+                        <div class="game-card" data-name="${game.name}">
                             <div class="card-glow"></div>
-                            <div class="icon-wrapper">
-                                ${renderIcon(game.icon)}
+                            <div class="icon-container">
+                                ${getIconHtml(game.icon)}
                             </div>
-                            <div class="game-name">${game.name || 'Untitled'}</div>
-                            <span class="game-category">${game.category || 'Uncategorized'}</span>
+                            <div class="game-name">${game.name}</div>
+                            <span class="game-category">${game.category}</span>
                             <div class="game-rating">
                                 ${renderStars(game.rating)}
                                 <span>${game.rating ? game.rating.toFixed(1) : '—'}</span>
@@ -1104,7 +1049,7 @@
             grid.querySelectorAll('.game-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const name = card.dataset.name;
-                    const game = allGames.find(g => (g.name || 'Untitled') === name);
+                    const game = allGames.find(g => g.name === name);
                     if (game) showDetail(game);
                 });
             });
@@ -1113,16 +1058,16 @@
             showingLabel.textContent = activeCategory === 'All' ? 'All' : activeCategory;
         }
 
-        // ─── Detail View ───
+        // ─── Detail ───
         function showDetail(game) {
             detailView.classList.remove('hidden');
             publicView.classList.add('hidden');
             detailCard.innerHTML = `
-                        <div class="icon-wrapper">
-                            ${renderIcon(game.icon)}
+                        <div class="icon-container">
+                            ${getIconHtml(game.icon)}
                         </div>
-                        <h1>${game.name || 'Untitled'}</h1>
-                        <div class="cat-tag">${game.category || 'Uncategorized'}</div>
+                        <h1>${game.name}</h1>
+                        <div class="cat-tag">${game.category}</div>
                         <div class="rating-big">
                             ${renderStars(game.rating)}
                             <span>${game.rating ? game.rating.toFixed(1) : 'Not rated'}</span>
@@ -1130,8 +1075,8 @@
                         </div>
                         ${game.link ? `
                             <a href="${game.link}" target="_blank" rel="noopener noreferrer" class="play-link">▶ Play Game</a>
-                            <div class="game-link-text">🔗 <a href="${game.link}" target="_blank" rel="noopener noreferrer">${game.link}</a></div>
-                        ` : `<p style="color:var(--text-secondary);">No game link provided.</p>`}
+                            <div class="game-link-text">🔗 <a href="${game.link}" target="_blank">${game.link}</a></div>
+                        ` : `<p style="color:var(--text-secondary);">No link provided.</p>`}
                     `;
         }
 
@@ -1146,7 +1091,7 @@
             grid.innerHTML = `
                         <div class="loading-state">
                             <div class="spinner">⏳</div>
-                            <div>Loading games from Google Sheet…</div>
+                            <div>Loading games…</div>
                         </div>
                     `;
             const data = await fetchGames();
@@ -1173,7 +1118,7 @@
                 showAdminPanel();
                 showToast('✅ Welcome back!', 'success');
             } else {
-                loginError.textContent = '❌ Invalid username or password.';
+                loginError.textContent = '❌ Invalid credentials.';
                 loginPass.value = '';
                 loginPass.focus();
             }
@@ -1201,7 +1146,7 @@
             const link = gameLink.value.trim();
 
             if (!name || !category || !link) {
-                showToast('⚠️ Name, Category, and Link are required.', 'error');
+                showToast('⚠️ Name, Category, and Link required.', 'error');
                 return;
             }
 
@@ -1211,11 +1156,11 @@
             const result = await addGame({ name, category, icon, rating, link });
 
             if (result.success) {
-                showToast('✅ Game added successfully!', 'success');
+                showToast('✅ Game added!', 'success');
                 addForm.reset();
                 await loadData();
             } else {
-                showToast('❌ Failed to add game: ' + (result.error || 'Unknown error'), 'error');
+                showToast('❌ Failed: ' + (result.error || 'Unknown error'), 'error');
             }
 
             submitBtn.disabled = false;
@@ -1255,11 +1200,8 @@
 
         function handleHash() {
             const hash = window.location.hash;
-            if (hash === '#admin') {
-                navigateTo('admin');
-            } else {
-                navigateTo('public');
-            }
+            if (hash === '#admin') navigateTo('admin');
+            else navigateTo('public');
         }
 
         // ─── Init ───
@@ -1269,9 +1211,8 @@
 
         handleHash();
 
-        console.log('🔧 GameVault with Admin Login & Image Support');
+        console.log('🔧 GameVault started.');
         console.log('📡 API URL:', API_URL);
     </script>
-
 </body>
 </html>
