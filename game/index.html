@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>🎮 GameVault · Google Sheet + Add Game</title>
+    <title>🎮 GameVault · Admin + Public</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <style>
-        /* ─── RESET & BASE ─── */
+        /* ─── RESET & BASE ─── (same as before) ─── */
         * {
             margin: 0;
             padding: 0;
@@ -19,6 +19,7 @@
             --bg-secondary: #12162a;
             --bg-card: #1a1f3a;
             --bg-card-hover: #232a4d;
+            --bg-admin: #0f1325;
             --text-primary: #f0f3ff;
             --text-secondary: #9aa3cc;
             --accent-1: #6c5ce7;
@@ -55,6 +56,9 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+        }
+        .hidden {
+            display: none !important;
         }
         .btn {
             display: inline-flex;
@@ -94,6 +98,14 @@
         }
         .btn-success:hover {
             background: #5fdb7e;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: #ff7a7a;
         }
         .btn-sm {
             padding: 6px 16px;
@@ -137,7 +149,7 @@
             border-color: rgba(255, 107, 107, 0.3);
             background: #2f1a1a;
         }
-        /* Hero */
+        /* ─── HERO ─── */
         .hero {
             padding: 32px 0 24px 0;
             display: flex;
@@ -171,67 +183,16 @@
             color: var(--accent-2);
             border: 1px solid rgba(108, 92, 231, 0.2);
         }
-        /* Add Game Form */
-        .add-game-section {
-            background: var(--bg-secondary);
-            border-radius: var(--radius);
-            padding: 24px 28px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .add-game-section h2 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        .add-game-section .sub {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 18px;
-        }
-        .add-game-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        .add-game-form .full-width {
-            grid-column: 1 / -1;
-        }
-        .add-game-form label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            display: block;
-            margin-bottom: 4px;
-        }
-        .add-game-form input,
-        .add-game-form select {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--bg-primary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 0.9rem;
-            font-family: inherit;
-            outline: none;
-            transition: var(--transition);
-        }
-        .add-game-form input:focus {
-            border-color: var(--accent-1);
-            box-shadow: 0 0 0 4px var(--accent-glow);
-        }
-        .add-game-form input::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.4;
-        }
-        .add-game-form .form-actions {
+        .hero-actions {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin-top: 6px;
         }
-        /* Controls */
+        .hero-actions .btn {
+            font-size: 0.8rem;
+            padding: 8px 20px;
+        }
+        /* ─── PUBLIC VIEW ─── */
         .controls {
             display: flex;
             flex-direction: column;
@@ -262,10 +223,6 @@
             font-family: inherit;
             outline: none;
             transition: var(--transition);
-        }
-        .search-wrap input::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.5;
         }
         .search-wrap input:focus {
             border-color: var(--accent-1);
@@ -330,7 +287,6 @@
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
-        /* Game Grid */
         .game-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -484,7 +440,159 @@
                 transform: rotate(360deg);
             }
         }
-        /* Detail (optional) */
+        /* ─── ADMIN LOGIN ─── */
+        .admin-login-wrapper {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+        .admin-login-box {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+        }
+        .admin-login-box .lock-icon {
+            font-size: 3rem;
+            text-align: center;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .admin-login-box h2 {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .admin-login-box .sub {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+        }
+        .admin-login-box label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .admin-login-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+            margin-bottom: 16px;
+        }
+        .admin-login-box input:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: var(--bg-card);
+        }
+        .admin-login-box .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .admin-login-box .form-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+        .admin-login-box .error-msg {
+            color: var(--danger);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 12px;
+            min-height: 24px;
+        }
+        /* ─── ADMIN PANEL ─── */
+        .admin-panel-wrapper {
+            padding: 20px 0 30px 0;
+        }
+        .admin-panel {
+            background: var(--bg-admin);
+            border-radius: var(--radius);
+            padding: 30px 28px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: fadeUp 0.4s ease forwards;
+        }
+        .admin-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .admin-panel .panel-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .admin-panel .panel-header .admin-user {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(108, 92, 231, 0.12);
+            padding: 4px 16px;
+            border-radius: 100px;
+        }
+        .admin-panel .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .admin-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        .admin-form .full-width {
+            grid-column: 1 / -1;
+        }
+        .admin-form label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .admin-form input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+        .admin-form input:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+        .admin-form input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.4;
+        }
+        .admin-form .form-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        /* ─── DETAIL VIEW ─── */
         .game-detail {
             animation: fadeUp 0.4s ease forwards;
             padding: 10px 0 30px 0;
@@ -583,10 +691,10 @@
             color: #fff;
         }
         @media (max-width: 700px) {
-            .add-game-form {
+            .admin-form {
                 grid-template-columns: 1fr;
             }
-            .add-game-form .full-width {
+            .admin-form .full-width {
                 grid-column: 1;
             }
             .hero {
@@ -632,73 +740,114 @@
     <div class="toast" id="toast"></div>
     <div class="container" id="app">
 
-        <!-- ═══ HERO ═══ -->
-        <header class="hero">
-            <div class="hero-left">
-                <h1>🎮 GameVault</h1>
-                <span class="badge">📊 Google Sheet</span>
-            </div>
-            <!-- कुनै extra action छैन, सबै main page मै छ -->
-        </header>
+        <!-- ══════════════════════════════════════════ -->
+        <!--  PUBLIC VIEW  (Main)                    -->
+        <!-- ══════════════════════════════════════════ -->
+        <div id="publicView">
+            <header class="hero">
+                <div class="hero-left">
+                    <h1>🎮 GameVault</h1>
+                    <span class="badge">📊 Google Sheet</span>
+                </div>
+                <div class="hero-actions">
+                    <a href="#admin" class="btn btn-outline btn-sm">🔐 Admin</a>
+                </div>
+            </header>
 
-        <!-- ═══ ADD GAME FORM ═══ -->
-        <section class="add-game-section">
-            <h2>➕ Add New Game</h2>
-            <p class="sub">Fill in the details below and submit. It will be saved to Google Sheet instantly.</p>
-            <form class="add-game-form" id="addGameForm">
-                <div>
-                    <label for="gameName">Game Name *</label>
-                    <input type="text" id="gameName" placeholder="e.g. Elden Ring" required />
+            <!-- Search & Filter -->
+            <div class="controls">
+                <div class="search-wrap">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search games…" autocomplete="off" />
                 </div>
-                <div>
-                    <label for="gameCategory">Category *</label>
-                    <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
-                </div>
-                <div>
-                    <label for="gameIcon">Icon (emoji or URL)</label>
-                    <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/icon.png" />
-                </div>
-                <div>
-                    <label for="gameRating">Rating (1–5)</label>
-                    <input type="number" id="gameRating" placeholder="4.8" min="0" max="5" step="0.1" />
-                </div>
-                <div class="full-width">
-                    <label for="gameLink">Game Link (URL) *</label>
-                    <input type="url" id="gameLink" placeholder="https://example.com/play" required />
-                </div>
-                <div class="full-width form-actions">
-                    <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Game</button>
-                    <button type="reset" class="btn btn-outline">Clear</button>
-                </div>
-            </form>
-        </section>
-
-        <!-- ═══ SEARCH & FILTER ═══ -->
-        <div class="controls">
-            <div class="search-wrap">
-                <span class="icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Search games by name or category…" autocomplete="off" />
+                <div class="filter-chips" id="filterContainer"></div>
             </div>
-            <div class="filter-chips" id="filterContainer">
-                <!-- populated by JS -->
+
+            <div class="grid-header">
+                <h2>🔥 <strong id="showingLabel">All</strong> games</h2>
+                <span class="result-count" id="resultCount">0 found</span>
+            </div>
+
+            <div class="game-grid" id="gameGrid">
+                <div class="loading-state">
+                    <div class="spinner">⏳</div>
+                    <div>Loading games from Google Sheet…</div>
+                </div>
             </div>
         </div>
 
-        <!-- ═══ GRID HEADER ═══ -->
-        <div class="grid-header">
-            <h2>🔥 <strong id="showingLabel">All</strong> games</h2>
-            <span class="result-count" id="resultCount">0 found</span>
-        </div>
+        <!-- ══════════════════════════════════════════ -->
+        <!--  ADMIN ROUTE (Login + Panel)            -->
+        <!-- ══════════════════════════════════════════ -->
+        <div id="adminRoute" class="hidden">
+            <!-- Login Screen -->
+            <div id="adminLogin" class="admin-login-wrapper">
+                <div class="admin-login-box">
+                    <span class="lock-icon">🔐</span>
+                    <h2>Admin Access</h2>
+                    <p class="sub">Enter your credentials to add games</p>
+                    <form id="loginForm">
+                        <label for="loginUser">Username</label>
+                        <input type="text" id="loginUser" placeholder="admin" required autocomplete="username" />
+                        <label for="loginPass">Password</label>
+                        <input type="password" id="loginPass" placeholder="••••••" required autocomplete="current-password" />
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">🔓 Login</button>
+                            <button type="button" class="btn btn-outline" onclick="window.location.hash=''">← Back</button>
+                        </div>
+                        <div class="error-msg" id="loginError"></div>
+                    </form>
+                </div>
+            </div>
 
-        <!-- ═══ GAME GRID ═══ -->
-        <div class="game-grid" id="gameGrid">
-            <div class="loading-state">
-                <div class="spinner">⏳</div>
-                <div>Loading games from Google Sheet…</div>
+            <!-- Admin Panel (visible after login) -->
+            <div id="adminPanel" class="hidden admin-panel-wrapper">
+                <div class="admin-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>🔧 Admin Panel</h2>
+                            <span class="admin-user" id="adminUserDisplay">👤 admin</span>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-outline btn-sm" id="adminLogoutBtn">🚪 Logout</button>
+                            <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public View</a>
+                        </div>
+                    </div>
+                    <p class="subtitle">Add a new game — it will be saved to Google Sheet and appear on the public page instantly.</p>
+
+                    <form class="admin-form" id="addGameForm">
+                        <div>
+                            <label for="gameName">Game Name *</label>
+                            <input type="text" id="gameName" placeholder="e.g. Elden Ring" required />
+                        </div>
+                        <div>
+                            <label for="gameCategory">Category *</label>
+                            <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
+                        </div>
+                        <div>
+                            <label for="gameIcon">Icon (emoji or URL)</label>
+                            <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/icon.png" />
+                        </div>
+                        <div>
+                            <label for="gameRating">Rating (1–5)</label>
+                            <input type="number" id="gameRating" placeholder="4.8" min="0" max="5" step="0.1" />
+                        </div>
+                        <div class="full-width">
+                            <label for="gameLink">Game Link (URL) *</label>
+                            <input type="url" id="gameLink" placeholder="https://example.com/play" required />
+                        </div>
+                        <div class="full-width form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Game</button>
+                            <button type="reset" class="btn btn-outline">Clear</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <!-- ═══ DETAIL VIEW (hidden) ═══ -->
+        <!-- ══════════════════════════════════════════ -->
+        <!--  DETAIL VIEW (optional)                 -->
+        <!-- ══════════════════════════════════════════ -->
         <div id="detailView" class="hidden">
             <div class="game-detail">
                 <div class="back-bar">
@@ -709,7 +858,7 @@
         </div>
 
         <footer class="footer">
-            <p>✦ Data stored in <strong>Google Sheet</strong> &bull; Add games directly from this page</p>
+            <p>✦ Data stored in <strong>Google Sheet</strong> &bull; <a href="#admin">🔐 Admin</a></p>
         </footer>
     </div>
 
@@ -719,23 +868,44 @@
         // ═══════════════════════════════════════════════════════════════
         const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace with your deployed URL
 
-        // ═══════════════════════════════════════════════════════════════
-        //  STATE
-        // ═══════════════════════════════════════════════════════════════
+        // ─── Credentials (localStorage) ───
+        const CRED_KEY = 'gamevault_creds';
+        const SESSION_KEY = 'gamevault_admin_session';
+
+        function getCredentials() {
+            try {
+                const raw = localStorage.getItem(CRED_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.username && parsed.password) return parsed;
+                }
+            } catch (_) {}
+            return { username: 'admin', password: 'admin123' };
+        }
+
+        function saveCredentials(creds) {
+            localStorage.setItem(CRED_KEY, JSON.stringify(creds));
+        }
+
+        function checkSession() {
+            return sessionStorage.getItem(SESSION_KEY) === 'true';
+        }
+
+        function setSession(val) {
+            sessionStorage.setItem(SESSION_KEY, val ? 'true' : 'false');
+        }
+
+        // ─── State ───
         let allGames = [];
         let activeCategory = 'All';
         let searchQuery = '';
 
-        // ═══════════════════════════════════════════════════════════════
-        //  DOM REFS
-        // ═══════════════════════════════════════════════════════════════
-        const form = document.getElementById('addGameForm');
-        const gameName = document.getElementById('gameName');
-        const gameCategory = document.getElementById('gameCategory');
-        const gameIcon = document.getElementById('gameIcon');
-        const gameRating = document.getElementById('gameRating');
-        const gameLink = document.getElementById('gameLink');
-        const submitBtn = document.getElementById('submitBtn');
+        // ─── DOM refs ───
+        const publicView = document.getElementById('publicView');
+        const adminRoute = document.getElementById('adminRoute');
+        const adminLogin = document.getElementById('adminLogin');
+        const adminPanel = document.getElementById('adminPanel');
+        const detailView = document.getElementById('detailView');
 
         const grid = document.getElementById('gameGrid');
         const searchInput = document.getElementById('searchInput');
@@ -743,16 +913,28 @@
         const showingLabel = document.getElementById('showingLabel');
         const resultCount = document.getElementById('resultCount');
 
-        const detailView = document.getElementById('detailView');
+        const loginForm = document.getElementById('loginForm');
+        const loginUser = document.getElementById('loginUser');
+        const loginPass = document.getElementById('loginPass');
+        const loginError = document.getElementById('loginError');
+        const adminUserDisplay = document.getElementById('adminUserDisplay');
+        const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+        const addForm = document.getElementById('addGameForm');
+        const gameName = document.getElementById('gameName');
+        const gameCategory = document.getElementById('gameCategory');
+        const gameIcon = document.getElementById('gameIcon');
+        const gameRating = document.getElementById('gameRating');
+        const gameLink = document.getElementById('gameLink');
+        const submitBtn = document.getElementById('submitBtn');
+
         const detailCard = document.getElementById('detailCard');
         const backFromDetailBtn = document.getElementById('backFromDetailBtn');
 
         const toast = document.getElementById('toast');
         let toastTimer = null;
 
-        // ═══════════════════════════════════════════════════════════════
-        //  TOAST
-        // ═══════════════════════════════════════════════════════════════
+        // ─── Toast ───
         function showToast(msg, type = 'success') {
             toast.textContent = msg;
             toast.className = 'toast ' + type;
@@ -762,17 +944,15 @@
             toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        //  API CALLS
-        // ═══════════════════════════════════════════════════════════════
+        // ─── API calls ───
         async function fetchGames() {
             try {
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error('Network response not ok');
+                const data = await res.json();
                 return data;
-            } catch (error) {
-                console.error('Error fetching games:', error);
+            } catch (err) {
+                console.error('Fetch error:', err);
                 showToast('⚠️ Failed to load games. Please try again.', 'error');
                 return [];
             }
@@ -780,25 +960,21 @@
 
         async function addGame(gameData) {
             try {
-                const response = await fetch(API_URL, {
+                const res = await fetch(API_URL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(gameData),
                 });
-                const result = await response.json();
+                const result = await res.json();
                 return result;
-            } catch (error) {
-                console.error('Error adding game:', error);
-                return { success: false, error: error.message };
+            } catch (err) {
+                console.error('Add game error:', err);
+                return { success: false, error: err.message };
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        //  RENDER HELPERS
-        // ═══════════════════════════════════════════════════════════════
+        // ─── Render helpers ───
         function renderStars(rating) {
             if (!rating || rating < 0) return '☆☆☆☆☆';
             const r = Math.min(Math.max(rating, 0), 5);
@@ -827,31 +1003,23 @@
 
         function getFilteredGames() {
             return allGames.filter(game => {
-                const matchCategory = activeCategory === 'All' || game.category === activeCategory;
-                const q = searchQuery.toLowerCase().trim();
-                const matchSearch = !q ||
-                    game.name.toLowerCase().includes(q) ||
-                    game.category.toLowerCase().includes(q);
-                return matchCategory && matchSearch;
+                const matchCat = activeCategory === 'All' || game.category === activeCategory;
+                const q = searchQuery.trim().toLowerCase();
+                const matchSearch = !q || game.name.toLowerCase().includes(q) || game.category.toLowerCase().includes(q);
+                return matchCat && matchSearch;
             });
         }
 
         function renderFilters() {
             const categories = getCategories();
             const counts = {};
-            allGames.forEach(g => {
-                counts[g.category] = (counts[g.category] || 0) + 1;
-            });
+            allGames.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
             counts['All'] = allGames.length;
 
             filterContainer.innerHTML = categories.map(cat => {
                 const count = counts[cat] || 0;
                 const activeClass = cat === activeCategory ? 'active' : '';
-                return `
-                            <button class="${activeClass}" data-category="${cat}">
-                                ${cat} <span class="count">(${count})</span>
-                            </button>
-                        `;
+                return `<button class="${activeClass}" data-category="${cat}">${cat} <span class="count">(${count})</span></button>`;
             }).join('');
 
             filterContainer.querySelectorAll('button').forEach(btn => {
@@ -865,13 +1033,12 @@
 
         function renderGrid() {
             const filtered = getFilteredGames();
-
             if (filtered.length === 0) {
                 grid.innerHTML = `
                             <div class="empty-state">
                                 <span class="big-emoji">🎮</span>
                                 <h3>No games found</h3>
-                                <p>Add your first game using the form above!</p>
+                                <p>Add your first game via the Admin panel!</p>
                             </div>
                         `;
                 resultCount.textContent = '0 found';
@@ -880,7 +1047,7 @@
             }
 
             grid.innerHTML = filtered.map(game => `
-                        <div class="game-card" data-id="${game.id || game.name}">
+                        <div class="game-card" data-name="${game.name}">
                             <div class="card-glow"></div>
                             <div class="icon-big">${game.icon || '🎮'}</div>
                             <div class="game-name">${game.name}</div>
@@ -893,11 +1060,9 @@
                         </div>
                     `).join('');
 
-            // Click on card → detail view (optional, but we keep it)
             grid.querySelectorAll('.game-card').forEach(card => {
                 card.addEventListener('click', () => {
-                    // Find game by name (or use data-id)
-                    const name = card.querySelector('.game-name').textContent;
+                    const name = card.dataset.name;
                     const game = allGames.find(g => g.name === name);
                     if (game) showDetail(game);
                 });
@@ -907,9 +1072,10 @@
             showingLabel.textContent = activeCategory === 'All' ? 'All' : activeCategory;
         }
 
-        // ─── Detail View (optional) ───
+        // ─── Detail View ───
         function showDetail(game) {
             detailView.classList.remove('hidden');
+            publicView.classList.add('hidden');
             detailCard.innerHTML = `
                         <div class="big-icon">${game.icon || '🎮'}</div>
                         <h1>${game.name}</h1>
@@ -920,35 +1086,19 @@
                             <span style="margin-left:12px;font-size:1rem;color:var(--accent-2);">Grade: ${getGrade(game.rating)}</span>
                         </div>
                         ${game.link ? `
-                            <a href="${game.link}" target="_blank" rel="noopener noreferrer" class="play-link">
-                                ▶ Play Game
-                            </a>
-                            <div class="game-link-text">
-                                🔗 <a href="${game.link}" target="_blank" rel="noopener noreferrer">${game.link}</a>
-                            </div>
-                        ` : `
-                            <p style="color:var(--text-secondary);">No game link provided.</p>
-                        `}
+                            <a href="${game.link}" target="_blank" rel="noopener noreferrer" class="play-link">▶ Play Game</a>
+                            <div class="game-link-text">🔗 <a href="${game.link}" target="_blank" rel="noopener noreferrer">${game.link}</a></div>
+                        ` : `<p style="color:var(--text-secondary);">No game link provided.</p>`}
                     `;
-            // Hide grid and show detail
-            document.querySelector('.controls').style.display = 'none';
-            document.querySelector('.grid-header').style.display = 'none';
-            grid.style.display = 'none';
-            // We'll manage visibility via back button
         }
 
         function hideDetail() {
             detailView.classList.add('hidden');
-            document.querySelector('.controls').style.display = '';
-            document.querySelector('.grid-header').style.display = '';
-            grid.style.display = '';
+            publicView.classList.remove('hidden');
         }
-
         backFromDetailBtn.addEventListener('click', hideDetail);
 
-        // ═══════════════════════════════════════════════════════════════
-        //  LOAD DATA
-        // ═══════════════════════════════════════════════════════════════
+        // ─── Load Data ───
         async function loadData() {
             grid.innerHTML = `
                         <div class="loading-state">
@@ -961,25 +1111,46 @@
                 allGames = data;
             } else {
                 allGames = [];
-                showToast('⚠️ No data received from server.', 'error');
+                showToast('⚠️ No data from server.', 'error');
             }
             renderFilters();
             renderGrid();
-            updateStats();
         }
 
-        function updateStats() {
-            document.getElementById('totalGames').textContent = allGames.length;
-            const cats = new Set(allGames.map(g => g.category));
-            document.getElementById('totalCategories').textContent = cats.size;
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        //  FORM SUBMIT
-        // ═══════════════════════════════════════════════════════════════
-        form.addEventListener('submit', async (e) => {
+        // ─── Admin Login ───
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const user = loginUser.value.trim();
+            const pass = loginPass.value.trim();
+            const creds = getCredentials();
 
+            if (user === creds.username && pass === creds.password) {
+                setSession(true);
+                loginError.textContent = '';
+                showAdminPanel();
+                showToast('✅ Welcome back!', 'success');
+            } else {
+                loginError.textContent = '❌ Invalid username or password.';
+                loginPass.value = '';
+                loginPass.focus();
+            }
+        });
+
+        function showAdminPanel() {
+            adminLogin.classList.add('hidden');
+            adminPanel.classList.remove('hidden');
+            adminUserDisplay.textContent = '👤 ' + getCredentials().username;
+        }
+
+        adminLogoutBtn.addEventListener('click', () => {
+            setSession(false);
+            navigateTo('public');
+            showToast('🚪 Logged out', '');
+        });
+
+        // ─── Add Game Form ───
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             const name = gameName.value.trim();
             const category = gameCategory.value.trim();
             const icon = gameIcon.value.trim() || '🎮';
@@ -987,11 +1158,10 @@
             const link = gameLink.value.trim();
 
             if (!name || !category || !link) {
-                showToast('⚠️ Please fill in Name, Category, and Link.', 'error');
+                showToast('⚠️ Name, Category, and Link are required.', 'error');
                 return;
             }
 
-            // Disable submit button
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ Adding…';
 
@@ -999,8 +1169,8 @@
 
             if (result.success) {
                 showToast('✅ Game added successfully!', 'success');
-                form.reset();
-                // Reload data
+                addForm.reset();
+                // Reload public data (if public view is visible, it will update)
                 await loadData();
             } else {
                 showToast('❌ Failed to add game: ' + (result.error || 'Unknown error'), 'error');
@@ -1010,23 +1180,58 @@
             submitBtn.textContent = '➕ Add Game';
         });
 
-        // ═══════════════════════════════════════════════════════════════
-        //  SEARCH
-        // ═══════════════════════════════════════════════════════════════
+        // ─── Search ───
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
             renderGrid();
         });
 
-        // ═══════════════════════════════════════════════════════════════
-        //  INIT
-        // ═══════════════════════════════════════════════════════════════
-        loadData();
+        // ─── Routing ───
+        function navigateTo(route) {
+            // Hide all views
+            publicView.classList.add('hidden');
+            adminRoute.classList.add('hidden');
+            detailView.classList.add('hidden');
 
-        // Update total games/categories (these are static, we'll update after load)
-        // We'll call updateStats in loadData after data is set.
+            if (route === 'public') {
+                publicView.classList.remove('hidden');
+                loadData();
+                window.location.hash = '';
+            } else if (route === 'admin') {
+                adminRoute.classList.remove('hidden');
+                if (checkSession()) {
+                    showAdminPanel();
+                } else {
+                    adminLogin.classList.remove('hidden');
+                    adminPanel.classList.add('hidden');
+                    loginError.textContent = '';
+                }
+            }
+        }
 
-        console.log('🔧 GameVault with Google Apps Script');
+        // ─── Hash change ───
+        window.addEventListener('hashchange', handleHash);
+        window.addEventListener('DOMContentLoaded', handleHash);
+
+        function handleHash() {
+            const hash = window.location.hash;
+            if (hash === '#admin') {
+                navigateTo('admin');
+            } else {
+                navigateTo('public');
+            }
+        }
+
+        // ─── Init ───
+        // Ensure default credentials exist
+        if (!localStorage.getItem(CRED_KEY)) {
+            saveCredentials({ username: 'admin', password: 'admin123' });
+        }
+
+        // Start
+        handleHash();
+
+        console.log('🔧 GameVault with Admin Login');
         console.log('📡 API URL:', API_URL);
     </script>
 
