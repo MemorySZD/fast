@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>🎮 GameVault · Google Sheet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
+    <style>
+        /* ─── RESET & BASE ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg-primary: #0b0d15;
+            --bg-secondary: #12162a;
+            --bg-card: #1a1f3a;
+            --bg-card-hover: #232a4d;
+            --bg-admin: #0f1325;
+            --text-primary: #f0f3ff;
+            --text-secondary: #9aa3cc;
+            --accent-1: #6c5ce7;
+            --accent-2: #a29bfe;
+            --accent-3: #00d4ff;
+            --accent-glow: rgba(108, 92, 231, 0.35);
+            --radius: 18px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --danger: #ff6b6b;
+            --success: #51cf66;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 0 0 40px 0;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.06) 0%, transparent 50%);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-1);
+            border-radius: 10px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .btn-primary {
+            background: var(--accent-1);
+            color: #fff;
+            border-color: var(--accent-1);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            background: #7c6df0;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: #ff7a7a;
+        }
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 0.75rem;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .btn-outline:hover {
+            background: var(--bg-card);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            border-color: rgba(81, 207, 102, 0.3);
+            background: #1a2f1a;
+        }
+        .toast.error {
+            border-color: rgba(255, 107, 107, 0.3);
+            background: #2f1a1a;
+        }
+        /* Hero */
+        .hero {
+            padding: 32px 0 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .hero-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .hero-left h1 {
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 30%, var(--accent-2) 70%, var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+        .hero-left .badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: rgba(108, 92, 231, 0.25);
+            padding: 4px 14px;
+            border-radius: 100px;
+            color: var(--accent-2);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+        }
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .hero-actions .btn {
+            font-size: 0.8rem;
+            padding: 8px 20px;
+        }
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 8px 0 28px 0;
+        }
+        .search-wrap {
+            position: relative;
+            width: 100%;
+        }
+        .search-wrap .icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .search-wrap input {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 60px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+        .search-wrap input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+        .search-wrap input:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: var(--bg-card);
+        }
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .filter-chips button {
+            padding: 6px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 60px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .filter-chips button:hover {
+            background: var(--bg-card);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+        .filter-chips button.active {
+            background: var(--accent-1);
+            color: #fff;
+            border-color: var(--accent-1);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .filter-chips button .count {
+            opacity: 0.5;
+            font-weight: 400;
+            font-size: 0.65rem;
+            margin-left: 4px;
+        }
+        .grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 8px 0 20px 0;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .grid-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .grid-header h2 strong {
+            color: #fff;
+            font-weight: 800;
+        }
+        .grid-header .result-count {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        /* Game Grid */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 18px;
+        }
+        .game-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 16px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+        }
+        .game-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.2), transparent 60%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .game-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            background: var(--bg-card-hover);
+            border-color: rgba(108, 92, 231, 0.25);
+            box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(108, 92, 231, 0.1);
+        }
+        .game-card:hover::before {
+            opacity: 1;
+        }
+        .game-card .icon-big {
+            font-size: 3.2rem;
+            line-height: 1;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+            transition: var(--transition);
+        }
+        .game-card:hover .icon-big {
+            transform: scale(1.08) rotate(-2deg);
+        }
+        .game-card .game-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            margin: 4px 0 2px;
+            line-height: 1.3;
+        }
+        .game-card .game-category {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-2);
+            background: rgba(108, 92, 231, 0.15);
+            padding: 2px 14px;
+            border-radius: 100px;
+            display: inline-block;
+            margin: 6px 0 4px;
+        }
+        .game-card .game-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: #fbbf24;
+            margin-top: 6px;
+        }
+        .game-card .game-rating span {
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+        }
+        .game-card .card-glow {
+            position: absolute;
+            top: -40%;
+            right: -20%;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.15), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .game-card:hover .card-glow {
+            opacity: 1;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+        .empty-state .big-emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 16px;
+        }
+        .empty-state h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-top: 6px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .empty-state .btn {
+            margin-top: 20px;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        .loading-state .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        /* Detail */
+        .game-detail {
+            animation: fadeUp 0.4s ease forwards;
+            padding: 10px 0 30px 0;
+        }
+        .game-detail .back-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .game-detail .back-bar .btn {
+            font-size: 0.8rem;
+            padding: 8px 20px;
+        }
+        .game-detail .detail-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 40px 36px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .game-detail .detail-card .big-icon {
+            font-size: 5rem;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+        .game-detail .detail-card h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .game-detail .detail-card .cat-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-2);
+            background: rgba(108, 92, 231, 0.15);
+            padding: 4px 20px;
+            border-radius: 100px;
+            margin: 6px 0 16px 0;
+        }
+        .game-detail .detail-card .rating-big {
+            font-size: 1.4rem;
+            color: #fbbf24;
+            margin: 8px 0 20px 0;
+        }
+        .game-detail .detail-card .rating-big span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-left: 6px;
+        }
+        .game-detail .detail-card .play-link {
+            display: inline-block;
+            padding: 14px 40px;
+            background: var(--accent-1);
+            color: #fff;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: 0 0 30px var(--accent-glow);
+            border: none;
+            cursor: pointer;
+        }
+        .game-detail .detail-card .play-link:hover {
+            background: #7c6df0;
+            transform: translateY(-3px);
+        }
+        .game-detail .detail-card .game-link-text {
+            margin-top: 16px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+        .game-detail .detail-card .game-link-text a {
+            color: var(--accent-3);
+            text-decoration: none;
+        }
+        .game-detail .detail-card .game-link-text a:hover {
+            text-decoration: underline;
+        }
+        /* Admin Login */
+        .admin-login-wrapper {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+        .admin-login-box {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+        }
+        .admin-login-box .lock-icon {
+            font-size: 3rem;
+            text-align: center;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .admin-login-box h2 {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .admin-login-box .sub {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+        }
+        .admin-login-box label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .admin-login-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+            margin-bottom: 16px;
+        }
+        .admin-login-box input:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: var(--bg-card);
+        }
+        .admin-login-box .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .admin-login-box .form-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+        .admin-login-box .error-msg {
+            color: var(--danger);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 12px;
+            min-height: 24px;
+        }
+        /* Admin Panel */
+        .admin-panel-wrapper {
+            padding: 20px 0 30px 0;
+        }
+        .admin-panel {
+            background: var(--bg-admin);
+            border-radius: var(--radius);
+            padding: 30px 28px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: fadeUp 0.4s ease forwards;
+        }
+        .admin-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .admin-panel .panel-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        .admin-panel .panel-header .admin-user {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(108, 92, 231, 0.12);
+            padding: 4px 16px;
+            border-radius: 100px;
+        }
+        .admin-panel .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .admin-tabs button {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 60px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .admin-tabs button:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .admin-tabs button.active {
+            background: var(--accent-1);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .admin-tab-content {
+            display: none;
+            animation: fadeUp 0.3s ease forwards;
+        }
+        .admin-tab-content.active {
+            display: block;
+        }
+        .admin-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        .admin-form .full-width {
+            grid-column: 1 / -1;
+        }
+        .admin-form label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .admin-form input,
+        .admin-form select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+        .admin-form input:focus,
+        .admin-form select:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: var(--bg-card);
+        }
+        .admin-form input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.4;
+        }
+        .admin-form .form-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .admin-game-list {
+            margin-top: 32px;
+        }
+        .admin-game-list h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+        .admin-game-list .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .admin-game-list .list-item:hover {
+            background: var(--bg-card);
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .admin-game-list .list-item .info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .admin-game-list .list-item .info .icon {
+            font-size: 1.6rem;
+        }
+        .admin-game-list .list-item .info .name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .admin-game-list .list-item .info .cat {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            background: rgba(108, 92, 231, 0.12);
+            padding: 2px 12px;
+            border-radius: 100px;
+        }
+        .admin-game-list .list-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .admin-game-list .list-item .actions .btn {
+            padding: 4px 14px;
+            font-size: 0.7rem;
+        }
+        .admin-game-list .empty-small {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 30px 0;
+            font-size: 0.9rem;
+        }
+        /* Settings */
+        .settings-section {
+            max-width: 480px;
+        }
+        .settings-section .setting-group {
+            margin-bottom: 24px;
+        }
+        .settings-section .setting-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .settings-section .setting-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+        .settings-section .setting-group input:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: var(--bg-card);
+        }
+        .settings-section .setting-group .hint {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            opacity: 0.6;
+        }
+        .footer {
+            margin-top: 56px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        .footer a {
+            color: var(--accent-2);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: #fff;
+        }
+        @media (max-width: 700px) {
+            .admin-form {
+                grid-template-columns: 1fr;
+            }
+            .admin-form .full-width {
+                grid-column: 1;
+            }
+            .admin-panel {
+                padding: 20px 16px;
+            }
+            .admin-login-box {
+                padding: 32px 24px;
+            }
+            .game-detail .detail-card {
+                padding: 28px 20px;
+            }
+            .game-detail .detail-card h1 {
+                font-size: 1.6rem;
+            }
+            .game-detail .detail-card .big-icon {
+                font-size: 3.8rem;
+            }
+            .hero {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hero-actions {
+                width: 100%;
+            }
+            .hero-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 600px) {
+            .game-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 14px;
+            }
+            .game-card {
+                padding: 16px 12px 14px;
+            }
+            .game-card .icon-big {
+                font-size: 2.6rem;
+            }
+            .filter-chips {
+                gap: 8px;
+            }
+            .filter-chips button {
+                padding: 5px 14px;
+                font-size: 0.7rem;
+            }
+            .search-wrap input {
+                padding: 12px 16px 12px 44px;
+                font-size: 0.9rem;
+            }
+            .admin-game-list .list-item {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .admin-game-list .list-item .info {
+                flex-wrap: wrap;
+            }
+            .admin-tabs button {
+                padding: 6px 16px;
+                font-size: 0.75rem;
+            }
+        }
+        @media (max-width: 420px) {
+            .game-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 12px;
+            }
+            .game-card .game-name {
+                font-size: 0.85rem;
+            }
+            .game-card .icon-big {
+                font-size: 2.2rem;
+            }
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .game-card {
+            animation: fadeUp 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="container" id="app">
+
+        <!-- ═══ MAIN VIEW ═══ -->
+        <div id="mainView">
+            <header class="hero">
+                <div class="hero-left">
+                    <h1>🎮 GameVault</h1>
+                    <span class="badge" id="dataSourceBadge">📊 Google Sheet</span>
+                </div>
+                <div class="hero-actions">
+                    <a href="#admin" class="btn btn-outline btn-sm">🔐 Admin</a>
+                </div>
+            </header>
+
+            <div class="controls">
+                <div class="search-wrap">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search games…" autocomplete="off" />
+                </div>
+                <div class="filter-chips" id="filterContainer"></div>
+            </div>
+
+            <div class="grid-header">
+                <h2>🔥 <strong id="showingLabel">All</strong> games</h2>
+                <span class="result-count" id="resultCount">0 found</span>
+            </div>
+
+            <div class="game-grid" id="gameGrid">
+                <div class="loading-state">
+                    <div class="spinner">⏳</div>
+                    <div>Loading games from Google Sheet…</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ADMIN ROUTE ═══ (optional, kept for local storage) -->
+        <div id="adminRoute" class="hidden">
+            <!-- Login -->
+            <div id="adminLogin" class="admin-login-wrapper">
+                <div class="admin-login-box">
+                    <span class="lock-icon">🔐</span>
+                    <h2>Admin Access</h2>
+                    <p class="sub">Manage games (local storage)</p>
+                    <form id="loginForm">
+                        <label for="loginUser">Username</label>
+                        <input type="text" id="loginUser" placeholder="admin" required autocomplete="username" />
+                        <label for="loginPass">Password</label>
+                        <input type="password" id="loginPass" placeholder="••••••" required autocomplete="current-password" />
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">🔓 Login</button>
+                            <button type="button" class="btn btn-outline" onclick="window.location.hash=''">← Back</button>
+                        </div>
+                        <div class="error-msg" id="loginError"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="adminPanel" class="hidden admin-panel-wrapper">
+                <div class="admin-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>🔧 Admin Panel</h2>
+                            <span class="admin-user" id="adminUserDisplay">👤 admin</span>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-outline btn-sm" id="adminLogoutBtn">🚪 Logout</button>
+                            <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public</a>
+                        </div>
+                    </div>
+                    <p class="subtitle">Add/delete games — stored in your browser (localStorage). Google Sheet data is read-only.</p>
+
+                    <div class="admin-tabs">
+                        <button class="active" data-tab="games">📋 Games</button>
+                        <button data-tab="settings">⚙️ Settings</button>
+                    </div>
+
+                    <!-- TAB: Games -->
+                    <div class="admin-tab-content active" id="tabGames">
+                        <form class="admin-form" id="adminForm">
+                            <div>
+                                <label for="gameName">Game Name *</label>
+                                <input type="text" id="gameName" placeholder="e.g. Elden Ring" required />
+                            </div>
+                            <div>
+                                <label for="gameCategory">Category *</label>
+                                <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
+                            </div>
+                            <div>
+                                <label for="gameIcon">Icon (emoji or URL)</label>
+                                <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/icon.png" />
+                            </div>
+                            <div>
+                                <label for="gameRating">Rating (1–5)</label>
+                                <input type="number" id="gameRating" placeholder="4.8" min="0" max="5" step="0.1" />
+                            </div>
+                            <div class="full-width">
+                                <label for="gameLink">Game Link (URL) *</label>
+                                <input type="url" id="gameLink" placeholder="https://example.com/play" required />
+                            </div>
+                            <div class="full-width form-actions">
+                                <button type="submit" class="btn btn-primary">➕ Add Game</button>
+                                <button type="reset" class="btn btn-outline">Clear</button>
+                            </div>
+                        </form>
+
+                        <div class="admin-game-list">
+                            <h3>📋 Local games (admin added)</h3>
+                            <div id="adminGameList"></div>
+                        </div>
+                    </div>
+
+                    <!-- TAB: Settings -->
+                    <div class="admin-tab-content" id="tabSettings">
+                        <div class="settings-section">
+                            <h3 style="margin-bottom:20px;font-weight:700;">Change Credentials</h3>
+                            <form id="settingsForm">
+                                <div class="setting-group">
+                                    <label for="newUsername">New Username</label>
+                                    <input type="text" id="newUsername" placeholder="Enter new username" />
+                                    <div class="hint">Leave blank to keep current</div>
+                                </div>
+                                <div class="setting-group">
+                                    <label for="newPassword">New Password</label>
+                                    <input type="password" id="newPassword" placeholder="Enter new password" />
+                                    <div class="hint">Leave blank to keep current</div>
+                                </div>
+                                <div class="setting-group">
+                                    <label for="confirmPassword">Confirm New Password</label>
+                                    <input type="password" id="confirmPassword" placeholder="Confirm new password" />
+                                </div>
+                                <button type="submit" class="btn btn-success">💾 Update Credentials</button>
+                            </form>
+                            <div id="settingsMsg" style="margin-top:16px;font-size:0.9rem;color:var(--text-secondary);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ DETAIL VIEW ═══ -->
+        <div id="detailView" class="hidden">
+            <div class="game-detail">
+                <div class="back-bar">
+                    <button class="btn btn-outline btn-sm" id="backFromDetailBtn">← Back to list</button>
+                </div>
+                <div class="detail-card" id="detailCard"></div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>✦ Data from <strong id="footerDataSource">Google Sheet</strong> &bull; <a href="#admin">🔐 Admin</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  🔥 तपाईंको Google Sheet को CSV URL
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const SHEET_CSV_URL =
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjCj-qW3dNB9OOOxnRp8FO0Kgfz4ZDPYC6y-GMiFcsArUcZ4DuIfIf88usn5QAOJ9ekGuuYgN67FSZ/pub?output=csv';
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  CORS-Proxy URL (यसले Google ले रोकेको CORS समस्या हटाउँछ)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  STORAGE HELPERS (Admin को लागि)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        const LOCAL_KEY = 'gamevault_local_games';
+        const CRED_KEY = 'gamevault_creds';
+
+        function getLocalGames() {
+            try {
+                const raw = localStorage.getItem(LOCAL_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) return parsed;
+                }
+            } catch (_) {}
+            return [];
+        }
+
+        function saveLocalGames(games) {
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(games));
+        }
+
+        function getCredentials() {
+            try {
+                const raw = localStorage.getItem(CRED_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.username && parsed.password) return parsed;
+                }
+            } catch (_) {}
+            return { username: 'admin', password: 'admin123' };
+        }
+
+        function saveCredentials(creds) {
+            localStorage.setItem(CRED_KEY, JSON.stringify(creds));
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  STATE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        let sheetGames = [];
+        let localGames = getLocalGames();
+        let allGames = [];
+        let activeCategory = 'All';
+        let searchQuery = '';
+        let isLoggedIn = false;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  DOM REFS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        const mainView = document.getElementById('mainView');
+        const adminRoute = document.getElementById('adminRoute');
+        const adminLogin = document.getElementById('adminLogin');
+        const adminPanel = document.getElementById('adminPanel');
+        const detailView = document.getElementById('detailView');
+
+        const grid = document.getElementById('gameGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterContainer = document.getElementById('filterContainer');
+        const showingLabel = document.getElementById('showingLabel');
+        const resultCount = document.getElementById('resultCount');
+        const dataSourceBadge = document.getElementById('dataSourceBadge');
+        const footerDataSource = document.getElementById('footerDataSource');
+
+        const loginForm = document.getElementById('loginForm');
+        const loginUser = document.getElementById('loginUser');
+        const loginPass = document.getElementById('loginPass');
+        const loginError = document.getElementById('loginError');
+
+        const adminForm = document.getElementById('adminForm');
+        const adminGameList = document.getElementById('adminGameList');
+        const adminUserDisplay = document.getElementById('adminUserDisplay');
+        const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+        const settingsForm = document.getElementById('settingsForm');
+        const newUsername = document.getElementById('newUsername');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const settingsMsg = document.getElementById('settingsMsg');
+
+        const detailCard = document.getElementById('detailCard');
+        const backFromDetailBtn = document.getElementById('backFromDetailBtn');
+
+        const toast = document.getElementById('toast');
+        let toastTimer = null;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  TOAST
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function showToast(msg, type = 'success') {
+            toast.textContent = msg;
+            toast.className = 'toast ' + type;
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  AUTH
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function checkAuth() {
+            const session = sessionStorage.getItem('gamevault_session');
+            if (session === 'true') {
+                isLoggedIn = true;
+                return true;
+            }
+            return false;
+        }
+
+        function login(username, password) {
+            const creds = getCredentials();
+            if (username === creds.username && password === creds.password) {
+                sessionStorage.setItem('gamevault_session', 'true');
+                isLoggedIn = true;
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            sessionStorage.removeItem('gamevault_session');
+            isLoggedIn = false;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ROUTING
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function navigateTo(route, data) {
+            mainView.classList.add('hidden');
+            adminRoute.classList.add('hidden');
+            detailView.classList.add('hidden');
+
+            if (route === 'main') {
+                mainView.classList.remove('hidden');
+                loadAllData();
+                window.location.hash = '';
+            } else if (route === 'admin') {
+                adminRoute.classList.remove('hidden');
+                if (checkAuth()) {
+                    showAdminPanel();
+                } else {
+                    showLoginScreen();
+                }
+            } else if (route === 'detail') {
+                detailView.classList.remove('hidden');
+                renderDetail(data);
+            }
+        }
+
+        function showLoginScreen() {
+            adminLogin.classList.remove('hidden');
+            adminPanel.classList.add('hidden');
+            loginError.textContent = '';
+            loginUser.value = '';
+            loginPass.value = '';
+            loginUser.focus();
+        }
+
+        function showAdminPanel() {
+            adminLogin.classList.add('hidden');
+            adminPanel.classList.remove('hidden');
+            const creds = getCredentials();
+            adminUserDisplay.textContent = '👤 ' + creds.username;
+            renderAdminList();
+            newUsername.value = '';
+            newPassword.value = '';
+            confirmPassword.value = '';
+            settingsMsg.textContent = '';
+            switchTab('games');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  TAB
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.admin-tabs button').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+            if (target) target.classList.add('active');
+            const btn = document.querySelector(`.admin-tabs button[data-tab="${tabId}"]`);
+            if (btn) btn.classList.add('active');
+        }
+
+        document.querySelectorAll('.admin-tabs button').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  LOAD DATA FROM SHEET (CORS-Proxy प्रयोग गरेर)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        async function loadSheetData() {
+            try {
+                // CORS-Proxy मार्फत Google Sheet CSV fetch गर्ने
+                const proxyUrl = CORS_PROXY + encodeURIComponent(SHEET_CSV_URL);
+                const response = await fetch(proxyUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const csvText = await response.text();
+
+                // CSV पार्स गर्ने
+                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+                if (lines.length < 2) {
+                    throw new Error('CSV has no data rows.');
+                }
+
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                const games = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',').map(v => v.trim());
+                    const game = {};
+                    headers.forEach((h, idx) => {
+                        game[h] = values[idx] || '';
+                    });
+                    if (game.name && game.category) {
+                        game.id = generateId();
+                        game.rating = parseFloat(game.rating) || 0;
+                        games.push(game);
+                    }
+                }
+
+                if (games.length === 0) {
+                    throw new Error('No valid games found in CSV.');
+                }
+
+                sheetGames = games;
+                showToast('✅ Google Sheet data loaded successfully!', 'success');
+            } catch (error) {
+                console.error('Error loading sheet data:', error);
+                sheetGames = [];
+                showToast('⚠️ Could not load Google Sheet data. Please check your sheet and try again.', 'error');
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  MERGE & RENDER
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function mergeGames() {
+            // Local games + Sheet games (Sheet takes priority if duplicate name)
+            const all = [...sheetGames, ...localGames];
+            const seen = new Set();
+            const unique = [];
+            for (const g of all) {
+                const key = g.name.toLowerCase().trim();
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    unique.push(g);
+                }
+            }
+            return unique;
+        }
+
+        async function loadAllData() {
+            // Show loading state
+            grid.innerHTML = `
+                        <div class="loading-state">
+                            <div class="spinner">⏳</div>
+                            <div>Loading games from Google Sheet…</div>
+                        </div>
+                    `;
+
+            await loadSheetData();
+            localGames = getLocalGames();
+            allGames = mergeGames();
+            renderFilters();
+            renderGrid();
+            updateStats();
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  RENDER HELPERS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function getCategories() {
+            const cats = allGames.map(g => g.category);
+            return ['All', ...new Set(cats)];
+        }
+
+        function getFilteredGames() {
+            return allGames.filter(game => {
+                const matchCategory = activeCategory === 'All' || game.category === activeCategory;
+                const q = searchQuery.toLowerCase().trim();
+                const matchSearch = !q ||
+                    game.name.toLowerCase().includes(q) ||
+                    game.category.toLowerCase().includes(q);
+                return matchCategory && matchSearch;
+            });
+        }
+
+        function renderStars(rating) {
+            if (!rating || rating < 0) return '☆☆☆☆☆';
+            const r = Math.min(Math.max(rating, 0), 5);
+            const full = Math.floor(r);
+            const half = r - full >= 0.5 ? 1 : 0;
+            const empty = 5 - full - half;
+            return '⭐'.repeat(full) + (half ? '⭐' : '') + '☆'.repeat(empty);
+        }
+
+        function renderFilters() {
+            const categories = getCategories();
+            const counts = {};
+            allGames.forEach(g => {
+                counts[g.category] = (counts[g.category] || 0) + 1;
+            });
+            counts['All'] = allGames.length;
+
+            filterContainer.innerHTML = categories.map(cat => {
+                const count = counts[cat] || 0;
+                const activeClass = cat === activeCategory ? 'active' : '';
+                return `
+                            <button class="${activeClass}" data-category="${cat}">
+                                ${cat} <span class="count">(${count})</span>
+                            </button>
+                        `;
+            }).join('');
+
+            filterContainer.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeCategory = btn.dataset.category;
+                    renderFilters();
+                    renderGrid();
+                });
+            });
+        }
+
+        function renderGrid() {
+            const filtered = getFilteredGames();
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                            <div class="empty-state">
+                                <span class="big-emoji">🔍</span>
+                                <h3>No games found</h3>
+                                <p>Try adjusting your search or filter.</p>
+                            </div>
+                        `;
+                resultCount.textContent = '0 found';
+                showingLabel.textContent = activeCategory === 'All' ? 'All' : activeCategory;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(game => `
+                        <a class="game-card" href="#detail-${game.id}" data-id="${game.id}">
+                            <div class="card-glow"></div>
+                            <div class="icon-big">${game.icon || '🎮'}</div>
+                            <div class="game-name">${game.name}</div>
+                            <span class="game-category">${game.category}</span>
+                            <div class="game-rating">
+                                ${renderStars(game.rating)}
+                                <span>${game.rating ? game.rating.toFixed(1) : '—'}</span>
+                            </div>
+                        </a>
+                    `).join('');
+
+            grid.querySelectorAll('.game-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = card.dataset.id;
+                    const game = allGames.find(g => g.id === id);
+                    if (game) navigateTo('detail', game);
+                });
+            });
+
+            resultCount.textContent = `${filtered.length} found`;
+            showingLabel.textContent = activeCategory === 'All' ? 'All' : activeCategory;
+        }
+
+        function updateStats() {
+            document.getElementById('totalGames').textContent = allGames.length;
+            const cats = new Set(allGames.map(g => g.category));
+            document.getElementById('totalCategories').textContent = cats.size;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  DETAIL
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function renderDetail(game) {
+            if (!game) {
+                detailCard.innerHTML = `<p style="color:var(--text-secondary);">Game not found.</p>`;
+                return;
+            }
+            detailCard.innerHTML = `
+                        <div class="big-icon">${game.icon || '🎮'}</div>
+                        <h1>${game.name}</h1>
+                        <div class="cat-tag">${game.category}</div>
+                        <div class="rating-big">
+                            ${renderStars(game.rating)}
+                            <span>${game.rating ? game.rating.toFixed(1) : 'Not rated'}</span>
+                        </div>
+                        ${game.link ? `
+                            <a href="${game.link}" target="_blank" rel="noopener noreferrer" class="play-link">
+                                ▶ Play Game
+                            </a>
+                            <div class="game-link-text">
+                                🔗 <a href="${game.link}" target="_blank" rel="noopener noreferrer">${game.link}</a>
+                            </div>
+                        ` : `
+                            <p style="color:var(--text-secondary);">No game link provided.</p>
+                        `}
+                    `;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ADMIN LIST
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function renderAdminList() {
+            const locals = getLocalGames();
+            if (locals.length === 0) {
+                adminGameList.innerHTML = `
+                            <div class="empty-small">🕹️ No local games added yet. Add one above!</div>
+                        `;
+                return;
+            }
+
+            adminGameList.innerHTML = locals.map((game) => `
+                        <div class="list-item">
+                            <div class="info">
+                                <span class="icon">${game.icon || '🎮'}</span>
+                                <span class="name">${game.name}</span>
+                                <span class="cat">${game.category}</span>
+                                <span style="font-size:0.7rem;color:var(--text-secondary);">
+                                    ${game.rating ? '⭐' + game.rating.toFixed(1) : '—'}
+                                </span>
+                            </div>
+                            <div class="actions">
+                                <button class="btn btn-danger btn-sm delete-local" data-id="${game.id}">✕</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+            adminGameList.querySelectorAll('.delete-local').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    let locals = getLocalGames();
+                    const game = locals.find(g => g.id === id);
+                    if (!game) return;
+                    if (confirm(`Delete "${game.name}" from local storage?`)) {
+                        locals = locals.filter(g => g.id !== id);
+                        saveLocalGames(locals);
+                        localGames = locals;
+                        renderAdminList();
+                        allGames = mergeGames();
+                        renderFilters();
+                        renderGrid();
+                        updateStats();
+                        showToast(`🗑️ "${game.name}" deleted locally`, 'success');
+                    }
+                });
+            });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ADMIN FORM
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        adminForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('gameName').value.trim();
+            const category = document.getElementById('gameCategory').value.trim();
+            const icon = document.getElementById('gameIcon').value.trim() || '🎮';
+            const rating = parseFloat(document.getElementById('gameRating').value) || 0;
+            const link = document.getElementById('gameLink').value.trim();
+
+            if (!name || !category || !link) {
+                showToast('⚠️ Name, Category, and Link are required.', 'error');
+                return;
+            }
+
+            const newGame = {
+                id: generateId(),
+                name,
+                category,
+                icon,
+                rating: Math.min(Math.max(rating, 0), 5),
+                link,
+            };
+
+            const locals = getLocalGames();
+            locals.push(newGame);
+            saveLocalGames(locals);
+            localGames = locals;
+
+            adminForm.reset();
+            document.getElementById('gameIcon').value = '🎮';
+            document.getElementById('gameRating').value = '';
+
+            renderAdminList();
+            allGames = mergeGames();
+            renderFilters();
+            renderGrid();
+            updateStats();
+
+            showToast(`✅ "${name}" added locally!`, 'success');
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  LOGIN
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = loginUser.value.trim();
+            const pass = loginPass.value.trim();
+
+            if (!user || !pass) {
+                loginError.textContent = 'Please enter both username and password.';
+                return;
+            }
+
+            if (login(user, pass)) {
+                loginError.textContent = '';
+                showAdminPanel();
+                showToast('✅ Welcome back!', 'success');
+            } else {
+                loginError.textContent = '❌ Invalid username or password.';
+                loginPass.value = '';
+                loginPass.focus();
+            }
+        });
+
+        adminLogoutBtn.addEventListener('click', () => {
+            logout();
+            navigateTo('main');
+            showToast('🚪 Logged out', '');
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  SETTINGS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newUser = newUsername.value.trim();
+            const newPass = newPassword.value.trim();
+            const confirm = confirmPassword.value.trim();
+
+            const creds = getCredentials();
+
+            if (newUser && newPass && newPass !== confirm) {
+                settingsMsg.textContent = '❌ Passwords do not match.';
+                settingsMsg.style.color = 'var(--danger)';
+                return;
+            }
+
+            if (newUser && !newPass) {
+                settingsMsg.textContent = '❌ Please enter a new password when changing username.';
+                settingsMsg.style.color = 'var(--danger)';
+                return;
+            }
+
+            if (newPass && !newUser) {
+                settingsMsg.textContent = '❌ Please enter a new username when changing password.';
+                settingsMsg.style.color = 'var(--danger)';
+                return;
+            }
+
+            if (!newUser && !newPass) {
+                settingsMsg.textContent = 'ℹ️ No changes made.';
+                settingsMsg.style.color = 'var(--text-secondary)';
+                return;
+            }
+
+            const updated = {
+                username: newUser || creds.username,
+                password: newPass || creds.password,
+            };
+            saveCredentials(updated);
+            sessionStorage.setItem('gamevault_session', 'true');
+            adminUserDisplay.textContent = '👤 ' + updated.username;
+            settingsMsg.textContent = '✅ Credentials updated successfully!';
+            settingsMsg.style.color = 'var(--success)';
+            newUsername.value = '';
+            newPassword.value = '';
+            confirmPassword.value = '';
+            showToast('✅ Credentials updated!', 'success');
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  SEARCH
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderGrid();
+        });
+
+        backFromDetailBtn.addEventListener('click', () => navigateTo('main'));
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  HASH ROUTING
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        window.addEventListener('hashchange', handleHash);
+        window.addEventListener('DOMContentLoaded', handleHash);
+
+        function handleHash() {
+            const hash = window.location.hash;
+            if (hash === '#admin') {
+                navigateTo('admin');
+            } else if (hash.startsWith('#detail-')) {
+                const id = hash.replace('#detail-', '');
+                const game = allGames.find(g => g.id === id);
+                if (game) navigateTo('detail', game);
+                else navigateTo('main');
+            } else {
+                navigateTo('main');
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  INIT
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        if (!localStorage.getItem(CRED_KEY)) {
+            saveCredentials({ username: 'admin', password: 'admin123' });
+        }
+
+        handleHash();
+    </script>
+
+</body>
+</html>
