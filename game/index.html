@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <style>
-        /* ─── RESET & BASE ─── (same as before) ─── */
         * {
             margin: 0;
             padding: 0;
@@ -91,22 +90,6 @@
         .btn-primary:hover {
             background: #7c6df0;
         }
-        .btn-success {
-            background: var(--success);
-            color: #fff;
-            border-color: var(--success);
-        }
-        .btn-success:hover {
-            background: #5fdb7e;
-        }
-        .btn-danger {
-            background: var(--danger);
-            color: #fff;
-            border-color: var(--danger);
-        }
-        .btn-danger:hover {
-            background: #ff7a7a;
-        }
         .btn-sm {
             padding: 6px 16px;
             font-size: 0.75rem;
@@ -118,6 +101,14 @@
         .btn-outline:hover {
             background: var(--bg-card);
             border-color: rgba(255, 255, 255, 0.2);
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: #ff7a7a;
         }
         .toast {
             position: fixed;
@@ -332,15 +323,28 @@
         .game-card:hover::before {
             opacity: 1;
         }
-        .game-card .icon-big {
+        /* ─── ICON / IMAGE FIX ─── */
+        .game-card .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            overflow: hidden;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .game-card .icon-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .game-card .icon-wrapper .emoji-big {
             font-size: 3.2rem;
             line-height: 1;
-            margin-bottom: 8px;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
-            transition: var(--transition);
-        }
-        .game-card:hover .icon-big {
-            transform: scale(1.08) rotate(-2deg);
         }
         .game-card .game-name {
             font-weight: 700;
@@ -612,10 +616,24 @@
             max-width: 600px;
             margin: 0 auto;
         }
-        .game-detail .detail-card .big-icon {
+        .game-detail .detail-card .icon-wrapper {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 12px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .game-detail .detail-card .icon-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .game-detail .detail-card .icon-wrapper .big-emoji {
             font-size: 5rem;
-            line-height: 1;
-            margin-bottom: 12px;
         }
         .game-detail .detail-card h1 {
             font-size: 2.2rem;
@@ -704,6 +722,13 @@
             .game-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             }
+            .game-card .icon-wrapper {
+                width: 64px;
+                height: 64px;
+            }
+            .game-card .icon-wrapper .emoji-big {
+                font-size: 2.6rem;
+            }
         }
         @media (max-width: 500px) {
             .game-grid {
@@ -713,8 +738,12 @@
             .game-card {
                 padding: 14px 10px 12px;
             }
-            .game-card .icon-big {
-                font-size: 2.4rem;
+            .game-card .icon-wrapper {
+                width: 56px;
+                height: 56px;
+            }
+            .game-card .icon-wrapper .emoji-big {
+                font-size: 2.2rem;
             }
             .game-card .game-name {
                 font-size: 0.85rem;
@@ -741,7 +770,7 @@
     <div class="container" id="app">
 
         <!-- ══════════════════════════════════════════ -->
-        <!--  PUBLIC VIEW  (Main)                    -->
+        <!--  PUBLIC VIEW                            -->
         <!-- ══════════════════════════════════════════ -->
         <div id="publicView">
             <header class="hero">
@@ -754,7 +783,6 @@
                 </div>
             </header>
 
-            <!-- Search & Filter -->
             <div class="controls">
                 <div class="search-wrap">
                     <span class="icon">🔍</span>
@@ -771,21 +799,21 @@
             <div class="game-grid" id="gameGrid">
                 <div class="loading-state">
                     <div class="spinner">⏳</div>
-                    <div>Loading games Please wait....</div>
+                    <div>Loading games from Google Sheet…</div>
                 </div>
             </div>
         </div>
 
         <!-- ══════════════════════════════════════════ -->
-        <!--  ADMIN ROUTE (Login + Panel)            -->
+        <!--  ADMIN ROUTE                             -->
         <!-- ══════════════════════════════════════════ -->
         <div id="adminRoute" class="hidden">
-            <!-- Login Screen -->
+            <!-- Login -->
             <div id="adminLogin" class="admin-login-wrapper">
                 <div class="admin-login-box">
                     <span class="lock-icon">🔐</span>
                     <h2>Admin Access</h2>
-                    <p class="sub">Enter your credentials to add games</p>
+                    <p class="sub">Enter credentials to add games</p>
                     <form id="loginForm">
                         <label for="loginUser">Username</label>
                         <input type="text" id="loginUser" placeholder="admin" required autocomplete="username" />
@@ -800,7 +828,7 @@
                 </div>
             </div>
 
-            <!-- Admin Panel (visible after login) -->
+            <!-- Admin Panel -->
             <div id="adminPanel" class="hidden admin-panel-wrapper">
                 <div class="admin-panel">
                     <div class="panel-header">
@@ -813,7 +841,7 @@
                             <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public View</a>
                         </div>
                     </div>
-                    <p class="subtitle">Add a new game — it will be saved to Google Sheet and appear on the public page instantly.</p>
+                    <p class="subtitle">Add a new game — it will be saved to Google Sheet and appear instantly.</p>
 
                     <form class="admin-form" id="addGameForm">
                         <div>
@@ -825,8 +853,8 @@
                             <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
                         </div>
                         <div>
-                            <label for="gameIcon">Icon (emoji or URL)</label>
-                            <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/icon.png" />
+                            <label for="gameIcon">Icon (emoji or image URL)</label>
+                            <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/image.png" />
                         </div>
                         <div>
                             <label for="gameRating">Rating (1–5)</label>
@@ -846,7 +874,7 @@
         </div>
 
         <!-- ══════════════════════════════════════════ -->
-        <!--  DETAIL VIEW (optional)                 -->
+        <!--  DETAIL VIEW                             -->
         <!-- ══════════════════════════════════════════ -->
         <div id="detailView" class="hidden">
             <div class="game-detail">
@@ -866,9 +894,9 @@
         // ═══════════════════════════════════════════════════════════════
         //  🔥 यहाँ आफ्नो Google Apps Script Web App URL राख्नुहोस्
         // ═══════════════════════════════════════════════════════════════
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace with your deployed URL
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace with your URL
 
-        // ─── Credentials (localStorage) ───
+        // ─── Credentials ───
         const CRED_KEY = 'gamevault_creds';
         const SESSION_KEY = 'gamevault_admin_session';
 
@@ -1010,6 +1038,17 @@
             });
         }
 
+        // ─── Render Icon (emoji or image) ───
+        function renderIcon(icon) {
+            if (!icon) return '<span class="emoji-big">🎮</span>';
+            // Check if it's a URL (starts with http:// or https://)
+            if (icon.startsWith('http://') || icon.startsWith('https://')) {
+                return `<img src="${icon}" alt="game icon" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'emoji-big\\'>🎮</span>'" />`;
+            }
+            // Otherwise treat as emoji
+            return `<span class="emoji-big">${icon}</span>`;
+        }
+
         function renderFilters() {
             const categories = getCategories();
             const counts = {};
@@ -1047,11 +1086,13 @@
             }
 
             grid.innerHTML = filtered.map(game => `
-                        <div class="game-card" data-name="${game.name}">
+                        <div class="game-card" data-name="${game.name || 'Untitled'}">
                             <div class="card-glow"></div>
-                            <div class="icon-big">${game.icon || '🎮'}</div>
-                            <div class="game-name">${game.name}</div>
-                            <span class="game-category">${game.category}</span>
+                            <div class="icon-wrapper">
+                                ${renderIcon(game.icon)}
+                            </div>
+                            <div class="game-name">${game.name || 'Untitled'}</div>
+                            <span class="game-category">${game.category || 'Uncategorized'}</span>
                             <div class="game-rating">
                                 ${renderStars(game.rating)}
                                 <span>${game.rating ? game.rating.toFixed(1) : '—'}</span>
@@ -1063,7 +1104,7 @@
             grid.querySelectorAll('.game-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const name = card.dataset.name;
-                    const game = allGames.find(g => g.name === name);
+                    const game = allGames.find(g => (g.name || 'Untitled') === name);
                     if (game) showDetail(game);
                 });
             });
@@ -1077,9 +1118,11 @@
             detailView.classList.remove('hidden');
             publicView.classList.add('hidden');
             detailCard.innerHTML = `
-                        <div class="big-icon">${game.icon || '🎮'}</div>
-                        <h1>${game.name}</h1>
-                        <div class="cat-tag">${game.category}</div>
+                        <div class="icon-wrapper">
+                            ${renderIcon(game.icon)}
+                        </div>
+                        <h1>${game.name || 'Untitled'}</h1>
+                        <div class="cat-tag">${game.category || 'Uncategorized'}</div>
                         <div class="rating-big">
                             ${renderStars(game.rating)}
                             <span>${game.rating ? game.rating.toFixed(1) : 'Not rated'}</span>
@@ -1170,7 +1213,6 @@
             if (result.success) {
                 showToast('✅ Game added successfully!', 'success');
                 addForm.reset();
-                // Reload public data (if public view is visible, it will update)
                 await loadData();
             } else {
                 showToast('❌ Failed to add game: ' + (result.error || 'Unknown error'), 'error');
@@ -1188,7 +1230,6 @@
 
         // ─── Routing ───
         function navigateTo(route) {
-            // Hide all views
             publicView.classList.add('hidden');
             adminRoute.classList.add('hidden');
             detailView.classList.add('hidden');
@@ -1209,7 +1250,6 @@
             }
         }
 
-        // ─── Hash change ───
         window.addEventListener('hashchange', handleHash);
         window.addEventListener('DOMContentLoaded', handleHash);
 
@@ -1223,15 +1263,13 @@
         }
 
         // ─── Init ───
-        // Ensure default credentials exist
         if (!localStorage.getItem(CRED_KEY)) {
             saveCredentials({ username: 'admin', password: 'admin123' });
         }
 
-        // Start
         handleHash();
 
-        console.log('🔧 GameVault with Admin Login');
+        console.log('🔧 GameVault with Admin Login & Image Support');
         console.log('📡 API URL:', API_URL);
     </script>
 
