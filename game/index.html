@@ -8,11 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
         :root {
             --bg-primary: #0b0d15;
             --bg-secondary: #12162a;
@@ -23,664 +19,193 @@
             --accent-1: #6c5ce7;
             --accent-2: #a29bfe;
             --accent-3: #00d4ff;
-            --accent-glow: rgba(108, 92, 231, 0.35);
+            --accent-glow: rgba(108,92,231,0.35);
             --radius: 18px;
-            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
             --danger: #ff6b6b;
             --success: #51cf66;
         }
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
             padding: 0 0 40px 0;
-            background-image: radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.06) 0%, transparent 50%);
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0,212,255,0.06) 0%, transparent 50%);
         }
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--accent-1);
-            border-radius: 10px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        .hidden {
-            display: none !important;
-        }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-1); border-radius:10px; }
+        .container { max-width:1200px; margin:0 auto; padding:0 20px; }
+        .hidden { display:none !important; }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 24px;
-            border-radius: 60px;
-            font-family: inherit;
-            font-weight: 700;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 24px; border-radius: 60px; font-family: inherit;
+            font-weight: 700; font-size: 0.9rem; border: none;
+            cursor: pointer; transition: var(--transition);
+            text-decoration: none; background: var(--bg-card);
+            color: var(--text-primary); border: 1px solid rgba(255,255,255,0.06);
         }
-        .btn:hover {
-            transform: translateY(-2px);
-            background: var(--bg-card-hover);
-            border-color: rgba(255, 255, 255, 0.12);
-        }
-        .btn-primary {
-            background: var(--accent-1);
-            color: #fff;
-            border-color: var(--accent-1);
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-        .btn-primary:hover {
-            background: #7c6df0;
-        }
-        .btn-danger {
-            background: var(--danger);
-            color: #fff;
-            border-color: var(--danger);
-        }
-        .btn-danger:hover {
-            background: #ff7a7a;
-        }
-        .btn-sm {
-            padding: 6px 16px;
-            font-size: 0.75rem;
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-        .btn-outline:hover {
-            background: var(--bg-card);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+        .btn:hover { transform: translateY(-2px); background: var(--bg-card-hover); border-color: rgba(255,255,255,0.12); }
+        .btn-primary { background: var(--accent-1); color: #fff; border-color: var(--accent-1); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-primary:hover { background: #7c6df0; }
+        .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .btn-danger:hover { background: #ff7a7a; }
+        .btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+        .btn-success:hover { background: #5fdb7e; }
+        .btn-sm { padding: 6px 16px; font-size: 0.75rem; }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.12); }
+        .btn-outline:hover { background: var(--bg-card); border-color: rgba(255,255,255,0.2); }
         .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
+            position: fixed; bottom: 30px; left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: var(--bg-card);
-            color: #fff;
-            padding: 14px 28px;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 999;
-            pointer-events: none;
+            background: var(--bg-card); color: #fff; padding: 14px 28px;
+            border-radius: 60px; font-weight: 600; font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            opacity: 0; transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+            z-index: 999; pointer-events: none;
         }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-        .toast.success {
-            border-color: rgba(81, 207, 102, 0.3);
-            background: #1a2f1a;
-        }
-        .toast.error {
-            border-color: rgba(255, 107, 107, 0.3);
-            background: #2f1a1a;
-        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: rgba(81,207,102,0.3); background: #1a2f1a; }
+        .toast.error { border-color: rgba(255,107,107,0.3); background: #2f1a1a; }
+
         /* ─── HERO ─── */
-        .hero {
-            padding: 32px 0 24px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        .hero-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .hero-left h1 {
-            font-size: clamp(1.8rem, 5vw, 2.8rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, #fff 30%, var(--accent-2) 70%, var(--accent-3));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.02em;
-        }
-        .hero-left .badge {
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            background: rgba(108, 92, 231, 0.25);
-            padding: 4px 14px;
-            border-radius: 100px;
-            color: var(--accent-2);
-            border: 1px solid rgba(108, 92, 231, 0.2);
-        }
-        .hero-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .hero-actions .btn {
-            font-size: 0.8rem;
-            padding: 8px 20px;
-        }
+        .hero { padding: 32px 0 24px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .hero-left { display: flex; align-items: center; gap: 16px; }
+        .hero-left h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 900; background: linear-gradient(135deg, #fff 30%, var(--accent-2) 70%, var(--accent-3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.02em; }
+        .hero-left .badge { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(108,92,231,0.25); padding: 4px 14px; border-radius: 100px; color: var(--accent-2); border: 1px solid rgba(108,92,231,0.2); }
+        .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .hero-actions .btn { font-size: 0.8rem; padding: 8px 20px; }
+
         /* ─── PUBLIC VIEW ─── */
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin: 8px 0 28px 0;
-        }
-        .search-wrap {
-            position: relative;
-            width: 100%;
-        }
-        .search-wrap .icon {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1rem;
-            opacity: 0.4;
-            pointer-events: none;
-        }
-        .search-wrap input {
-            width: 100%;
-            padding: 14px 20px 14px 48px;
-            background: var(--bg-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 60px;
-            color: #fff;
-            font-size: 0.95rem;
-            font-family: inherit;
-            outline: none;
-            transition: var(--transition);
-        }
-        .search-wrap input:focus {
-            border-color: var(--accent-1);
-            box-shadow: 0 0 0 4px var(--accent-glow);
-            background: var(--bg-card);
-        }
-        .filter-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-        .filter-chips button {
-            padding: 6px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 60px;
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            font-size: 0.78rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-        .filter-chips button:hover {
-            background: var(--bg-card);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
-        }
-        .filter-chips button.active {
-            background: var(--accent-1);
-            color: #fff;
-            border-color: var(--accent-1);
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-        .filter-chips button .count {
-            opacity: 0.5;
-            font-weight: 400;
-            font-size: 0.65rem;
-            margin-left: 4px;
-        }
-        .grid-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin: 8px 0 20px 0;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .grid-header h2 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-        .grid-header h2 strong {
-            color: #fff;
-            font-weight: 800;
-        }
-        .grid-header .result-count {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 18px;
-        }
+        .controls { display: flex; flex-direction: column; gap: 16px; margin: 8px 0 28px 0; }
+        .search-wrap { position: relative; width: 100%; }
+        .search-wrap .icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 1rem; opacity: 0.4; pointer-events: none; }
+        .search-wrap input { width: 100%; padding: 14px 20px 14px 48px; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.06); border-radius: 60px; color: #fff; font-size: 0.95rem; font-family: inherit; outline: none; transition: var(--transition); }
+        .search-wrap input:focus { border-color: var(--accent-1); box-shadow: 0 0 0 4px var(--accent-glow); background: var(--bg-card); }
+        .filter-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .filter-chips button { padding: 6px 20px; border: 1px solid rgba(255,255,255,0.06); border-radius: 60px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+        .filter-chips button:hover { background: var(--bg-card); color: #fff; border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+        .filter-chips button.active { background: var(--accent-1); color: #fff; border-color: var(--accent-1); box-shadow: 0 0 20px var(--accent-glow); }
+        .filter-chips button .count { opacity: 0.5; font-weight: 400; font-size: 0.65rem; margin-left: 4px; }
+        .grid-header { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 20px 0; flex-wrap: wrap; gap: 8px; }
+        .grid-header h2 { font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+        .grid-header h2 strong { color: #fff; font-weight: 800; }
+        .grid-header .result-count { font-size: 0.8rem; color: var(--text-secondary); }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
         .game-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 16px 12px 14px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            transition: var(--transition);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            text-decoration: none;
-            color: inherit;
+            background: var(--bg-card); border-radius: var(--radius); padding: 16px 12px 14px;
+            border: 1px solid rgba(255,255,255,0.04); transition: var(--transition);
+            cursor: pointer; position: relative; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            text-decoration: none; color: inherit;
         }
-        .game-card:hover {
-            transform: translateY(-4px);
-            background: var(--bg-card-hover);
-            border-color: rgba(108, 92, 231, 0.25);
-            box-shadow: 0 12px 30px -10px rgba(0,0,0,0.6);
-        }
-        /* Icon/Image container - uniform size */
+        .game-card:hover { transform: translateY(-4px); background: var(--bg-card-hover); border-color: rgba(108,92,231,0.25); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.6); }
         .game-card .icon-container {
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-secondary);
-            margin-bottom: 10px;
-            flex-shrink: 0;
+            width: 80px; height: 80px; border-radius: 12px; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-secondary); margin-bottom: 10px; flex-shrink: 0;
         }
-        .game-card .icon-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .game-card .icon-container img { width: 100%; height: 100%; object-fit: cover; }
+        .game-card .icon-container .fallback-emoji { font-size: 3rem; line-height: 1; }
+        .game-card .game-name { font-weight: 700; font-size: 0.95rem; color: #fff; margin: 4px 0 2px; line-height: 1.3; }
+        .game-card .game-category { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-2); background: rgba(108,92,231,0.15); padding: 2px 12px; border-radius: 100px; display: inline-block; margin: 4px 0 4px; }
+        .game-card .game-rating { display: flex; align-items: center; gap: 4px; font-size: 0.7rem; color: #fbbf24; margin-top: 4px; }
+        .game-card .game-rating span { color: var(--text-secondary); font-size: 0.65rem; }
+        .game-card .game-grade { font-size: 0.65rem; font-weight: 700; background: rgba(108,92,231,0.2); padding: 1px 12px; border-radius: 100px; color: var(--accent-2); margin-top: 4px; }
+        .game-card .card-glow { position: absolute; top: -40%; right: -20%; width: 120px; height: 120px; background: radial-gradient(circle, rgba(108,92,231,0.15), transparent 70%); border-radius: 50%; pointer-events: none; opacity: 0; transition: var(--transition); }
+        .game-card:hover .card-glow { opacity: 1; }
+
+        /* Pagination */
+        .pagination {
+            display: flex; justify-content: center; align-items: center;
+            gap: 12px; margin-top: 30px; flex-wrap: wrap;
         }
-        .game-card .icon-container .fallback-emoji {
-            font-size: 3rem;
-            line-height: 1;
+        .pagination button {
+            padding: 8px 20px; border-radius: 60px; border: 1px solid rgba(255,255,255,0.1);
+            background: var(--bg-secondary); color: var(--text-primary);
+            font-family: inherit; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; transition: var(--transition);
         }
-        .game-card .game-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: #fff;
-            margin: 4px 0 2px;
-            line-height: 1.3;
-        }
-        .game-card .game-category {
-            font-size: 0.6rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--accent-2);
-            background: rgba(108, 92, 231, 0.15);
-            padding: 2px 12px;
-            border-radius: 100px;
-            display: inline-block;
-            margin: 4px 0 4px;
-        }
-        .game-card .game-rating {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.7rem;
-            color: #fbbf24;
-            margin-top: 4px;
-        }
-        .game-card .game-rating span {
-            color: var(--text-secondary);
-            font-size: 0.65rem;
-        }
-        .game-card .game-grade {
-            font-size: 0.65rem;
-            font-weight: 700;
-            background: rgba(108, 92, 231, 0.2);
-            padding: 1px 12px;
-            border-radius: 100px;
-            color: var(--accent-2);
-            margin-top: 4px;
-        }
-        .game-card .card-glow {
-            position: absolute;
-            top: -40%;
-            right: -20%;
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(108, 92, 231, 0.15), transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: 0;
-            transition: var(--transition);
-        }
-        .game-card:hover .card-glow {
-            opacity: 1;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            grid-column: 1 / -1;
-        }
-        .empty-state .big-emoji {
-            font-size: 4rem;
-            display: block;
-            margin-bottom: 16px;
-        }
-        .empty-state h3 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #fff;
-        }
-        .empty-state p {
-            color: var(--text-secondary);
-            margin-top: 6px;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .loading-state {
-            text-align: center;
-            padding: 60px 20px;
-            grid-column: 1 / -1;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-        .loading-state .spinner {
-            display: inline-block;
-            animation: spin 1s linear infinite;
-            font-size: 2rem;
-            margin-bottom: 12px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .pagination button:hover:not(:disabled) { background: var(--bg-card-hover); border-color: var(--accent-1); }
+        .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .pagination .page-info { color: var(--text-secondary); font-size: 0.9rem; }
+
+        .empty-state { text-align: center; padding: 60px 20px; grid-column: 1 / -1; }
+        .empty-state .big-emoji { font-size: 4rem; display: block; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 1.3rem; font-weight: 700; color: #fff; }
+        .empty-state p { color: var(--text-secondary); margin-top: 6px; max-width: 400px; margin-left: auto; margin-right: auto; }
+        .loading-state { text-align: center; padding: 60px 20px; grid-column: 1 / -1; color: var(--text-secondary); font-size: 1.1rem; }
+        .loading-state .spinner { display: inline-block; animation: spin 1s linear infinite; font-size: 2rem; margin-bottom: 12px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         /* ─── ADMIN LOGIN ─── */
-        .admin-login-wrapper {
-            min-height: 70vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px 20px;
-        }
-        .admin-login-box {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 48px 40px;
-            max-width: 420px;
-            width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 30px 60px -20px rgba(0,0,0,0.8);
-        }
-        .admin-login-box .lock-icon {
-            font-size: 3rem;
-            text-align: center;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .admin-login-box h2 {
-            text-align: center;
-            font-size: 1.6rem;
-            font-weight: 800;
-            margin-bottom: 4px;
-        }
-        .admin-login-box .sub {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 28px;
-        }
-        .admin-login-box label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            display: block;
-            margin-bottom: 4px;
-        }
-        .admin-login-box input {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--bg-secondary);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 0.95rem;
-            font-family: inherit;
-            outline: none;
-            transition: var(--transition);
-            margin-bottom: 16px;
-        }
-        .admin-login-box input:focus {
-            border-color: var(--accent-1);
-            box-shadow: 0 0 0 4px var(--accent-glow);
-            background: var(--bg-card);
-        }
-        .admin-login-box .form-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 8px;
-        }
-        .admin-login-box .form-actions .btn {
-            flex: 1;
-            justify-content: center;
-        }
-        .admin-login-box .error-msg {
-            color: var(--danger);
-            font-size: 0.85rem;
-            text-align: center;
-            margin-top: 12px;
-            min-height: 24px;
-        }
+        .admin-login-wrapper { min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 30px 20px; }
+        .admin-login-box { background: var(--bg-card); border-radius: var(--radius); padding: 48px 40px; max-width: 420px; width: 100%; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px -20px rgba(0,0,0,0.8); }
+        .admin-login-box .lock-icon { font-size: 3rem; text-align: center; display: block; margin-bottom: 8px; }
+        .admin-login-box h2 { text-align: center; font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
+        .admin-login-box .sub { text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 28px; }
+        .admin-login-box label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+        .admin-login-box input { width: 100%; padding: 12px 16px; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; color: #fff; font-size: 0.95rem; font-family: inherit; outline: none; transition: var(--transition); margin-bottom: 16px; }
+        .admin-login-box input:focus { border-color: var(--accent-1); box-shadow: 0 0 0 4px var(--accent-glow); background: var(--bg-card); }
+        .admin-login-box .form-actions { display: flex; gap: 12px; margin-top: 8px; }
+        .admin-login-box .form-actions .btn { flex: 1; justify-content: center; }
+        .admin-login-box .error-msg { color: var(--danger); font-size: 0.85rem; text-align: center; margin-top: 12px; min-height: 24px; }
+
         /* ─── ADMIN PANEL ─── */
-        .admin-panel-wrapper {
-            padding: 20px 0 30px 0;
-        }
-        .admin-panel {
-            background: var(--bg-admin);
-            border-radius: var(--radius);
-            padding: 30px 28px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            animation: fadeUp 0.4s ease forwards;
-        }
-        .admin-panel .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 6px;
-        }
-        .admin-panel .panel-header h2 {
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
-        .admin-panel .panel-header .admin-user {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            background: rgba(108, 92, 231, 0.12);
-            padding: 4px 16px;
-            border-radius: 100px;
-        }
-        .admin-panel .subtitle {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 24px;
-        }
-        .admin-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-        .admin-form .full-width {
-            grid-column: 1 / -1;
-        }
-        .admin-form label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            display: block;
-            margin-bottom: 4px;
-        }
-        .admin-form input {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--bg-primary);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 0.9rem;
-            font-family: inherit;
-            outline: none;
-            transition: var(--transition);
-        }
-        .admin-form input:focus {
-            border-color: var(--accent-1);
-            box-shadow: 0 0 0 4px var(--accent-glow);
-        }
-        .admin-form input::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.4;
-        }
-        .admin-form .form-actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 6px;
-        }
+        .admin-panel-wrapper { padding: 20px 0 30px 0; }
+        .admin-panel { background: var(--bg-admin); border-radius: var(--radius); padding: 30px 28px; border: 1px solid rgba(255,255,255,0.05); animation: fadeUp 0.4s ease forwards; }
+        .admin-panel .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 6px; }
+        .admin-panel .panel-header h2 { font-size: 1.4rem; font-weight: 700; }
+        .admin-panel .panel-header .admin-user { font-size: 0.8rem; color: var(--text-secondary); background: rgba(108,92,231,0.12); padding: 4px 16px; border-radius: 100px; }
+        .admin-panel .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px; }
+
+        .admin-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px; flex-wrap: wrap; }
+        .admin-tabs button { padding: 8px 24px; border: none; border-radius: 60px; background: transparent; color: var(--text-secondary); font-family: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: var(--transition); }
+        .admin-tabs button:hover { color: #fff; background: rgba(255,255,255,0.04); }
+        .admin-tabs button.active { background: var(--accent-1); color: #fff; box-shadow: 0 0 20px var(--accent-glow); }
+        .admin-tab-content { display: none; animation: fadeUp 0.3s ease forwards; }
+        .admin-tab-content.active { display: block; }
+
+        .admin-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .admin-form .full-width { grid-column: 1 / -1; }
+        .admin-form label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+        .admin-form input { width: 100%; padding: 12px 16px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; color: #fff; font-size: 0.9rem; font-family: inherit; outline: none; transition: var(--transition); }
+        .admin-form input:focus { border-color: var(--accent-1); box-shadow: 0 0 0 4px var(--accent-glow); }
+        .admin-form input::placeholder { color: var(--text-secondary); opacity: 0.4; }
+        .admin-form .file-upload-wrapper { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .admin-form .file-upload-wrapper input[type="file"] { padding: 8px; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; color: var(--text-secondary); font-size: 0.8rem; cursor: pointer; }
+        .admin-form .form-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+
+        /* Settings tab */
+        .settings-section { max-width: 480px; }
+        .settings-section .setting-group { margin-bottom: 24px; }
+        .settings-section .setting-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+        .settings-section .setting-group input { width: 100%; padding: 12px 16px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; color: #fff; font-size: 0.95rem; font-family: inherit; outline: none; transition: var(--transition); }
+        .settings-section .setting-group input:focus { border-color: var(--accent-1); box-shadow: 0 0 0 4px var(--accent-glow); }
+
         /* ─── DETAIL VIEW ─── */
-        .game-detail {
-            animation: fadeUp 0.4s ease forwards;
-            padding: 10px 0 30px 0;
-        }
-        .game-detail .back-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 28px;
-        }
-        .game-detail .detail-card {
-            background: var(--bg-card);
-            border-radius: var(--radius);
-            padding: 40px 36px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .game-detail .detail-card .icon-container {
-            width: 120px;
-            height: 120px;
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-secondary);
-            margin: 0 auto 12px;
-        }
-        .game-detail .detail-card .icon-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .game-detail .detail-card .icon-container .fallback-emoji {
-            font-size: 4rem;
-        }
-        .game-detail .detail-card h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin-bottom: 4px;
-        }
-        .game-detail .detail-card .cat-tag {
-            display: inline-block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--accent-2);
-            background: rgba(108, 92, 231, 0.15);
-            padding: 4px 20px;
-            border-radius: 100px;
-            margin: 6px 0 16px 0;
-        }
-        .game-detail .detail-card .rating-big {
-            font-size: 1.4rem;
-            color: #fbbf24;
-            margin: 8px 0 20px 0;
-        }
-        .game-detail .detail-card .rating-big span {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-left: 6px;
-        }
-        .game-detail .detail-card .play-link {
-            display: inline-block;
-            padding: 14px 40px;
-            background: var(--accent-1);
-            color: #fff;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 1rem;
-            text-decoration: none;
-            transition: var(--transition);
-            box-shadow: 0 0 30px var(--accent-glow);
-            border: none;
-            cursor: pointer;
-        }
-        .game-detail .detail-card .play-link:hover {
-            background: #7c6df0;
-            transform: translateY(-3px);
-        }
-        .game-detail .detail-card .game-link-text {
-            margin-top: 16px;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            word-break: break-all;
-        }
-        .game-detail .detail-card .game-link-text a {
-            color: var(--accent-3);
-            text-decoration: none;
-        }
-        .footer {
-            margin-top: 56px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-        }
-        .footer a {
-            color: var(--accent-2);
-            text-decoration: none;
-        }
-        .footer a:hover {
-            color: #fff;
-        }
+        .game-detail { animation: fadeUp 0.4s ease forwards; padding: 10px 0 30px 0; }
+        .game-detail .back-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+        .game-detail .detail-card { background: var(--bg-card); border-radius: var(--radius); padding: 40px 36px; border: 1px solid rgba(255,255,255,0.05); text-align: center; max-width: 600px; margin: 0 auto; }
+        .game-detail .detail-card .icon-container { width: 120px; height: 120px; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); margin: 0 auto 12px; }
+        .game-detail .detail-card .icon-container img { width: 100%; height: 100%; object-fit: cover; }
+        .game-detail .detail-card .icon-container .fallback-emoji { font-size: 4rem; }
+        .game-detail .detail-card h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 4px; }
+        .game-detail .detail-card .cat-tag { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-2); background: rgba(108,92,231,0.15); padding: 4px 20px; border-radius: 100px; margin: 6px 0 16px 0; }
+        .game-detail .detail-card .rating-big { font-size: 1.4rem; color: #fbbf24; margin: 8px 0 20px 0; }
+        .game-detail .detail-card .rating-big span { color: var(--text-secondary); font-size: 0.9rem; margin-left: 6px; }
+        .game-detail .detail-card .play-link { display: inline-block; padding: 14px 40px; background: var(--accent-1); color: #fff; border-radius: 60px; font-weight: 700; font-size: 1rem; text-decoration: none; transition: var(--transition); box-shadow: 0 0 30px var(--accent-glow); border: none; cursor: pointer; }
+        .game-detail .detail-card .play-link:hover { background: #7c6df0; transform: translateY(-3px); }
+        .game-detail .detail-card .game-link-text { margin-top: 16px; color: var(--text-secondary); font-size: 0.8rem; word-break: break-all; }
+        .game-detail .detail-card .game-link-text a { color: var(--accent-3); text-decoration: none; }
+
+        .footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.04); text-align: center; color: var(--text-secondary); font-size: 0.75rem; }
+        .footer a { color: var(--accent-2); text-decoration: none; }
+        .footer a:hover { color: #fff; }
+
         @media (max-width: 700px) {
             .admin-form { grid-template-columns: 1fr; }
             .admin-form .full-width { grid-column: 1; }
@@ -694,10 +219,7 @@
             .game-card .icon-container .fallback-emoji { font-size: 2.2rem; }
             .game-card .game-name { font-size: 0.8rem; }
         }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(18px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeUp { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform: translateY(0); } }
         .game-card { animation: fadeUp 0.4s ease forwards; }
     </style>
 </head>
@@ -737,6 +259,13 @@
                     <div>Loading games…</div>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="paginationControls">
+                <button id="prevPage" disabled>← Previous</button>
+                <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                <button id="nextPage" disabled>Next →</button>
+            </div>
         </div>
 
         <!-- ═══ ADMIN ROUTE ═══ -->
@@ -746,7 +275,7 @@
                 <div class="admin-login-box">
                     <span class="lock-icon">🔐</span>
                     <h2>Admin Access</h2>
-                    <p class="sub">Enter credentials to add games</p>
+                    <p class="sub">Enter credentials to manage games</p>
                     <form id="loginForm">
                         <label for="loginUser">Username</label>
                         <input type="text" id="loginUser" placeholder="admin" required />
@@ -774,34 +303,72 @@
                             <a href="#" class="btn btn-outline btn-sm" onclick="window.location.hash=''">← Public</a>
                         </div>
                     </div>
-                    <p class="subtitle">Add a new game — it will save to Google Sheet and appear instantly.</p>
+                    <p class="subtitle">Manage games and credentials.</p>
 
-                    <form class="admin-form" id="addGameForm">
-                        <div>
-                            <label for="gameName">Game Name *</label>
-                            <input type="text" id="gameName" placeholder="e.g. Elden Ring" required />
+                    <div class="admin-tabs">
+                        <button class="active" data-tab="games">📋 Games</button>
+                        <button data-tab="settings">⚙️ Settings</button>
+                    </div>
+
+                    <!-- Tab: Games -->
+                    <div class="admin-tab-content active" id="tabGames">
+                        <form class="admin-form" id="addGameForm">
+                            <div>
+                                <label for="gameName">Game Name *</label>
+                                <input type="text" id="gameName" placeholder="e.g. Elden Ring" required />
+                            </div>
+                            <div>
+                                <label for="gameCategory">Category *</label>
+                                <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
+                            </div>
+                            <div class="full-width">
+                                <label for="gameIcon">Icon (Image URL / Emoji / Upload)</label>
+                                <div class="file-upload-wrapper">
+                                    <input type="text" id="gameIcon" placeholder="🎮 or https://example.com/icon.png" style="flex:1;" />
+                                    <input type="file" id="iconFileInput" accept="image/*" />
+                                    <span style="font-size:0.7rem; color:var(--text-secondary);">or upload image</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="gameRating">Rating (1–5)</label>
+                                <input type="number" id="gameRating" placeholder="4.8" min="0" max="5" step="0.1" />
+                            </div>
+                            <div class="full-width">
+                                <label for="gameLink">Game Link (URL) *</label>
+                                <input type="url" id="gameLink" placeholder="https://example.com/play" required />
+                            </div>
+                            <div class="full-width form-actions">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Game</button>
+                                <button type="reset" class="btn btn-outline">Clear</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab: Settings -->
+                    <div class="admin-tab-content" id="tabSettings">
+                        <div class="settings-section">
+                            <h3 style="margin-bottom:20px;font-weight:700;">Change Admin Credentials</h3>
+                            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:20px;">
+                                These credentials are stored in Google Sheet (Config) and will be used for login.
+                            </p>
+                            <form id="settingsForm">
+                                <div class="setting-group">
+                                    <label for="newUsername">New Username</label>
+                                    <input type="text" id="newUsername" placeholder="Enter new username" />
+                                </div>
+                                <div class="setting-group">
+                                    <label for="newPassword">New Password</label>
+                                    <input type="password" id="newPassword" placeholder="Enter new password" />
+                                </div>
+                                <div class="setting-group">
+                                    <label for="confirmPassword">Confirm Password</label>
+                                    <input type="password" id="confirmPassword" placeholder="Confirm new password" />
+                                </div>
+                                <button type="submit" class="btn btn-success">💾 Update Credentials</button>
+                            </form>
+                            <div id="settingsMsg" style="margin-top:16px; font-size:0.9rem; color:var(--text-secondary);"></div>
                         </div>
-                        <div>
-                            <label for="gameCategory">Category *</label>
-                            <input type="text" id="gameCategory" placeholder="e.g. RPG, Action" required />
-                        </div>
-                        <div>
-                            <label for="gameIcon">Icon (Image URL or Emoji)</label>
-                            <input type="text" id="gameIcon" placeholder="https://example.com/icon.png or 🎮" />
-                        </div>
-                        <div>
-                            <label for="gameRating">Rating (1–5)</label>
-                            <input type="number" id="gameRating" placeholder="4.8" min="0" max="5" step="0.1" />
-                        </div>
-                        <div class="full-width">
-                            <label for="gameLink">Game Link (URL) *</label>
-                            <input type="url" id="gameLink" placeholder="https://example.com/play" required />
-                        </div>
-                        <div class="full-width form-actions">
-                            <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Game</button>
-                            <button type="reset" class="btn btn-outline">Clear</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -823,41 +390,22 @@
 
     <script>
         // ════════════════════════════════════════════════════
-        // 🔥 यहाँ आफ्नो Web App URL हाल्नुहोस्
+        // 🔥 तपाईंको Web App URL यहाँ हाल्नुहोस्
         // ════════════════════════════════════════════════════
         const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace
 
-        // ─── Credentials (localStorage) ───
-        const CRED_KEY = 'gamevault_creds';
+        // ─── Session ───
         const SESSION_KEY = 'gamevault_admin_session';
 
-        function getCredentials() {
-            try {
-                const raw = localStorage.getItem(CRED_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed && parsed.username && parsed.password) return parsed;
-                }
-            } catch (_) {}
-            return { username: 'admin', password: 'admin123' };
-        }
-
-        function saveCredentials(creds) {
-            localStorage.setItem(CRED_KEY, JSON.stringify(creds));
-        }
-
-        function checkSession() {
-            return sessionStorage.getItem(SESSION_KEY) === 'true';
-        }
-
-        function setSession(val) {
-            sessionStorage.setItem(SESSION_KEY, val ? 'true' : 'false');
-        }
+        function checkSession() { return sessionStorage.getItem(SESSION_KEY) === 'true'; }
+        function setSession(val) { sessionStorage.setItem(SESSION_KEY, val ? 'true' : 'false'); }
 
         // ─── State ───
         let allGames = [];
         let activeCategory = 'All';
         let searchQuery = '';
+        let currentPage = 1;
+        const PAGE_SIZE = 12; // desktop, mobile मा adjust गर्न सकिन्छ (तर we use fixed and rely on responsive)
 
         // ─── DOM refs ───
         const publicView = document.getElementById('publicView');
@@ -871,6 +419,10 @@
         const filterContainer = document.getElementById('filterContainer');
         const showingLabel = document.getElementById('showingLabel');
         const resultCount = document.getElementById('resultCount');
+        const paginationControls = document.getElementById('paginationControls');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const pageInfo = document.getElementById('pageInfo');
 
         const loginForm = document.getElementById('loginForm');
         const loginUser = document.getElementById('loginUser');
@@ -885,7 +437,14 @@
         const gameIcon = document.getElementById('gameIcon');
         const gameRating = document.getElementById('gameRating');
         const gameLink = document.getElementById('gameLink');
+        const iconFileInput = document.getElementById('iconFileInput');
         const submitBtn = document.getElementById('submitBtn');
+
+        const settingsForm = document.getElementById('settingsForm');
+        const newUsername = document.getElementById('newUsername');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const settingsMsg = document.getElementById('settingsMsg');
 
         const detailCard = document.getElementById('detailCard');
         const backFromDetailBtn = document.getElementById('backFromDetailBtn');
@@ -903,43 +462,46 @@
             toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // ─── API calls (CORS fix: use URL-encoded) ───
-        async function fetchGames() {
-            try {
-                const res = await fetch(API_URL);
-                if (!res.ok) throw new Error('Network response not ok');
-                const data = await res.json();
-                return data;
-            } catch (err) {
-                console.error('Fetch error:', err);
-                showToast('⚠️ Failed to load games.', 'error');
-                return [];
+        // ─── API calls ───
+        async function apiRequest(method, params = {}) {
+            const formData = new URLSearchParams();
+            for (const key in params) {
+                formData.append(key, params[key]);
             }
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: method === 'POST' ? formData.toString() : undefined,
+            };
+            // For GET, we append params to URL
+            let url = API_URL;
+            if (method === 'GET') {
+                const query = new URLSearchParams(params).toString();
+                if (query) url += '?' + query;
+            }
+            const response = await fetch(url, options);
+            return await response.json();
+        }
+
+        async function fetchGames() {
+            const data = await apiRequest('GET', { action: 'getGames' });
+            return data;
         }
 
         async function addGame(gameData) {
-            try {
-                // URL-encoded body → no preflight
-                const formData = new URLSearchParams();
-                formData.append('name', gameData.name);
-                formData.append('category', gameData.category);
-                formData.append('icon', gameData.icon);
-                formData.append('rating', gameData.rating);
-                formData.append('link', gameData.link);
+            const params = { action: 'addGame', ...gameData };
+            return await apiRequest('POST', params);
+        }
 
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: formData.toString(),
-                });
-                const result = await res.json();
-                return result;
-            } catch (err) {
-                console.error('Add game error:', err);
-                return { success: false, error: err.message };
-            }
+        async function verifyLogin(username, password) {
+            const result = await apiRequest('POST', { action: 'verifyLogin', username, password });
+            return result.success || false;
+        }
+
+        async function updateCredentials(newUser, newPass) {
+            return await apiRequest('POST', { action: 'updateCredentials', newUsername: newUser, newPassword: newPass });
         }
 
         // ─── Render helpers ───
@@ -964,25 +526,23 @@
             return 'F';
         }
 
-        // Check if string is a valid image URL (simple)
-        function isImageUrl(url) {
-            if (!url) return false;
-            const imgExtensions = ['jpg','jpeg','png','gif','webp','bmp','svg'];
-            const ext = url.split('.').pop().toLowerCase();
-            return imgExtensions.includes(ext) || url.startsWith('http') && (url.includes('imgur') || url.includes('i.ibb.co'));
+        function isImageUrl(str) {
+            if (!str) return false;
+            const imgExt = ['jpg','jpeg','png','gif','webp','bmp','svg'];
+            const ext = str.split('.').pop().toLowerCase();
+            return imgExt.includes(ext) || str.startsWith('http') && (str.includes('imgur') || str.includes('i.ibb.co') || str.includes('data:image'));
+        }
+
+        function isBase64Image(str) {
+            return str && str.startsWith('data:image');
         }
 
         function getIconHtml(icon) {
-            if (isImageUrl(icon)) {
+            if (isBase64Image(icon) || isImageUrl(icon)) {
                 return `<img src="${icon}" alt="game icon" loading="lazy" />`;
             } else {
                 return `<span class="fallback-emoji">${icon || '🎮'}</span>`;
             }
-        }
-
-        function getCategories() {
-            const cats = allGames.map(g => g.category);
-            return ['All', ...new Set(cats)];
         }
 
         function getFilteredGames() {
@@ -992,6 +552,11 @@
                 const matchSearch = !q || game.name.toLowerCase().includes(q) || game.category.toLowerCase().includes(q);
                 return matchCat && matchSearch;
             });
+        }
+
+        function getCategories() {
+            const cats = allGames.map(g => g.category);
+            return ['All', ...new Set(cats)];
         }
 
         function renderFilters() {
@@ -1009,42 +574,50 @@
             filterContainer.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     activeCategory = btn.dataset.category;
+                    currentPage = 1; // reset page on filter
                     renderFilters();
                     renderGrid();
+                    renderPagination();
                 });
             });
         }
 
         function renderGrid() {
             const filtered = getFilteredGames();
-            if (filtered.length === 0) {
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            const pageGames = filtered.slice(start, end);
+
+            if (pageGames.length === 0) {
                 grid.innerHTML = `
-                            <div class="empty-state">
-                                <span class="big-emoji">🎮</span>
-                                <h3>No games found</h3>
-                                <p>Add your first game via Admin panel.</p>
-                            </div>
-                        `;
+                    <div class="empty-state">
+                        <span class="big-emoji">🎮</span>
+                        <h3>No games found</h3>
+                        <p>Add games via Admin panel.</p>
+                    </div>
+                `;
                 resultCount.textContent = '0 found';
                 showingLabel.textContent = activeCategory === 'All' ? 'All' : activeCategory;
                 return;
             }
 
-            grid.innerHTML = filtered.map(game => `
-                        <div class="game-card" data-name="${game.name}">
-                            <div class="card-glow"></div>
-                            <div class="icon-container">
-                                ${getIconHtml(game.icon)}
-                            </div>
-                            <div class="game-name">${game.name}</div>
-                            <span class="game-category">${game.category}</span>
-                            <div class="game-rating">
-                                ${renderStars(game.rating)}
-                                <span>${game.rating ? game.rating.toFixed(1) : '—'}</span>
-                            </div>
-                            <div class="game-grade">${getGrade(game.rating)}</div>
-                        </div>
-                    `).join('');
+            grid.innerHTML = pageGames.map(game => `
+                <div class="game-card" data-name="${game.name}">
+                    <div class="card-glow"></div>
+                    <div class="icon-container">
+                        ${getIconHtml(game.icon)}
+                    </div>
+                    <div class="game-name">${game.name}</div>
+                    <span class="game-category">${game.category}</span>
+                    <div class="game-rating">
+                        ${renderStars(game.rating)}
+                        <span>${game.rating ? game.rating.toFixed(1) : '—'}</span>
+                    </div>
+                    <div class="game-grade">${getGrade(game.rating)}</div>
+                </div>
+            `).join('');
 
             grid.querySelectorAll('.game-card').forEach(card => {
                 card.addEventListener('click', () => {
@@ -1058,26 +631,34 @@
             showingLabel.textContent = activeCategory === 'All' ? 'All' : activeCategory;
         }
 
+        function renderPagination() {
+            const filtered = getFilteredGames();
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
         // ─── Detail ───
         function showDetail(game) {
             detailView.classList.remove('hidden');
             publicView.classList.add('hidden');
             detailCard.innerHTML = `
-                        <div class="icon-container">
-                            ${getIconHtml(game.icon)}
-                        </div>
-                        <h1>${game.name}</h1>
-                        <div class="cat-tag">${game.category}</div>
-                        <div class="rating-big">
-                            ${renderStars(game.rating)}
-                            <span>${game.rating ? game.rating.toFixed(1) : 'Not rated'}</span>
-                            <span style="margin-left:12px;font-size:1rem;color:var(--accent-2);">Grade: ${getGrade(game.rating)}</span>
-                        </div>
-                        ${game.link ? `
-                            <a href="${game.link}" target="_blank" rel="noopener noreferrer" class="play-link">▶ Play Game</a>
-                            <div class="game-link-text">🔗 <a href="${game.link}" target="_blank">${game.link}</a></div>
-                        ` : `<p style="color:var(--text-secondary);">No link provided.</p>`}
-                    `;
+                <div class="icon-container">
+                    ${getIconHtml(game.icon)}
+                </div>
+                <h1>${game.name}</h1>
+                <div class="cat-tag">${game.category}</div>
+                <div class="rating-big">
+                    ${renderStars(game.rating)}
+                    <span>${game.rating ? game.rating.toFixed(1) : 'Not rated'}</span>
+                    <span style="margin-left:12px;font-size:1rem;color:var(--accent-2);">Grade: ${getGrade(game.rating)}</span>
+                </div>
+                ${game.link ? `
+                    <a href="${game.link}" target="_blank" rel="noopener noreferrer" class="play-link">▶ Play Game</a>
+                    <div class="game-link-text">🔗 <a href="${game.link}" target="_blank">${game.link}</a></div>
+                ` : `<p style="color:var(--text-secondary);">No link provided.</p>`}
+            `;
         }
 
         function hideDetail() {
@@ -1089,30 +670,36 @@
         // ─── Load Data ───
         async function loadData() {
             grid.innerHTML = `
-                        <div class="loading-state">
-                            <div class="spinner">⏳</div>
-                            <div>Loading games…</div>
-                        </div>
-                    `;
+                <div class="loading-state">
+                    <div class="spinner">⏳</div>
+                    <div>Loading games…</div>
+                </div>
+            `;
             const data = await fetchGames();
             if (Array.isArray(data)) {
-                allGames = data;
+                // Reverse order: last added first
+                allGames = data.reverse();
             } else {
                 allGames = [];
                 showToast('⚠️ No data from server.', 'error');
             }
+            currentPage = 1;
             renderFilters();
             renderGrid();
+            renderPagination();
         }
 
         // ─── Admin Login ───
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const user = loginUser.value.trim();
             const pass = loginPass.value.trim();
-            const creds = getCredentials();
-
-            if (user === creds.username && pass === creds.password) {
+            if (!user || !pass) {
+                loginError.textContent = 'Please enter both fields.';
+                return;
+            }
+            const success = await verifyLogin(user, pass);
+            if (success) {
                 setSession(true);
                 loginError.textContent = '';
                 showAdminPanel();
@@ -1127,7 +714,9 @@
         function showAdminPanel() {
             adminLogin.classList.add('hidden');
             adminPanel.classList.remove('hidden');
-            adminUserDisplay.textContent = '👤 ' + getCredentials().username;
+            adminUserDisplay.textContent = '👤 ' + document.getElementById('loginUser').value;
+            // Switch to games tab
+            switchTab('games');
         }
 
         adminLogoutBtn.addEventListener('click', () => {
@@ -1136,7 +725,36 @@
             showToast('🚪 Logged out', '');
         });
 
+        // ─── Tab switching ───
+        function switchTab(tabId) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.admin-tabs button').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+            if (target) target.classList.add('active');
+            const btn = document.querySelector(`.admin-tabs button[data-tab="${tabId}"]`);
+            if (btn) btn.classList.add('active');
+        }
+
+        document.querySelectorAll('.admin-tabs button').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
         // ─── Add Game Form ───
+        // File upload: convert to Base64 and set to icon input
+        iconFileInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                gameIcon.value = ev.target.result; // Base64 data URL
+                showToast('✅ Image uploaded and encoded.', 'success');
+            };
+            reader.onerror = function() {
+                showToast('❌ Failed to read file.', 'error');
+            };
+            reader.readAsDataURL(file);
+        });
+
         addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = gameName.value.trim();
@@ -1158,6 +776,8 @@
             if (result.success) {
                 showToast('✅ Game added!', 'success');
                 addForm.reset();
+                // Clear file input
+                iconFileInput.value = '';
                 await loadData();
             } else {
                 showToast('❌ Failed: ' + (result.error || 'Unknown error'), 'error');
@@ -1167,10 +787,66 @@
             submitBtn.textContent = '➕ Add Game';
         });
 
+        // ─── Settings (Update Credentials) ───
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newUser = newUsername.value.trim();
+            const newPass = newPassword.value.trim();
+            const confirm = confirmPassword.value.trim();
+
+            if (!newUser || !newPass) {
+                settingsMsg.textContent = '❌ Both fields are required.';
+                settingsMsg.style.color = 'var(--danger)';
+                return;
+            }
+            if (newPass !== confirm) {
+                settingsMsg.textContent = '❌ Passwords do not match.';
+                settingsMsg.style.color = 'var(--danger)';
+                return;
+            }
+
+            const result = await updateCredentials(newUser, newPass);
+            if (result.success) {
+                settingsMsg.textContent = '✅ Credentials updated!';
+                settingsMsg.style.color = 'var(--success)';
+                newUsername.value = '';
+                newPassword.value = '';
+                confirmPassword.value = '';
+                adminUserDisplay.textContent = '👤 ' + newUser;
+                showToast('✅ Credentials updated successfully!', 'success');
+            } else {
+                settingsMsg.textContent = '❌ Error: ' + (result.error || 'Unknown error');
+                settingsMsg.style.color = 'var(--danger)';
+            }
+        });
+
         // ─── Search ───
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
+            currentPage = 1;
             renderGrid();
+            renderPagination();
+        });
+
+        // ─── Pagination ───
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderGrid();
+                renderPagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const filtered = getFilteredGames();
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderGrid();
+                renderPagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
 
         // ─── Routing ───
@@ -1205,10 +881,6 @@
         }
 
         // ─── Init ───
-        if (!localStorage.getItem(CRED_KEY)) {
-            saveCredentials({ username: 'admin', password: 'admin123' });
-        }
-
         handleHash();
 
         console.log('🔧 GameVault started.');
