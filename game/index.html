@@ -221,6 +221,7 @@
         }
         @keyframes fadeUp { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform: translateY(0); } }
         .game-card { animation: fadeUp 0.4s ease forwards; }
+        .bg-admin { --bg-admin: #0f1325; }
     </style>
 </head>
 <body>
@@ -392,7 +393,7 @@
         // ════════════════════════════════════════════════════
         // 🔥 तपाईंको Web App URL यहाँ हाल्नुहोस्
         // ════════════════════════════════════════════════════
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzAB0W_-qLneCr2QI4ogMFsB4-CL0kqbavTI4qMSmdpdvaX8rf7NOAAG3s7JnHAX5XhlQ/exec'; // <-- Replace with your deployed URL
 
         // ─── Session ───
         const SESSION_KEY = 'gamevault_admin_session';
@@ -405,7 +406,7 @@
         let activeCategory = 'All';
         let searchQuery = '';
         let currentPage = 1;
-        const PAGE_SIZE = 12; // desktop, mobile मा adjust गर्न सकिन्छ (तर we use fixed and rely on responsive)
+        const PAGE_SIZE = 12;
 
         // ─── DOM refs ───
         const publicView = document.getElementById('publicView');
@@ -475,7 +476,6 @@
                 },
                 body: method === 'POST' ? formData.toString() : undefined,
             };
-            // For GET, we append params to URL
             let url = API_URL;
             if (method === 'GET') {
                 const query = new URLSearchParams(params).toString();
@@ -574,7 +574,7 @@
             filterContainer.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     activeCategory = btn.dataset.category;
-                    currentPage = 1; // reset page on filter
+                    currentPage = 1;
                     renderFilters();
                     renderGrid();
                     renderPagination();
@@ -714,8 +714,7 @@
         function showAdminPanel() {
             adminLogin.classList.add('hidden');
             adminPanel.classList.remove('hidden');
-            adminUserDisplay.textContent = '👤 ' + document.getElementById('loginUser').value;
-            // Switch to games tab
+            adminUserDisplay.textContent = '👤 ' + loginUser.value;
             switchTab('games');
         }
 
@@ -740,13 +739,12 @@
         });
 
         // ─── Add Game Form ───
-        // File upload: convert to Base64 and set to icon input
         iconFileInput.addEventListener('change', function(e) {
             const file = this.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(ev) {
-                gameIcon.value = ev.target.result; // Base64 data URL
+                gameIcon.value = ev.target.result;
                 showToast('✅ Image uploaded and encoded.', 'success');
             };
             reader.onerror = function() {
@@ -776,7 +774,6 @@
             if (result.success) {
                 showToast('✅ Game added!', 'success');
                 addForm.reset();
-                // Clear file input
                 iconFileInput.value = '';
                 await loadData();
             } else {
